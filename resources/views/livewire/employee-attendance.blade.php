@@ -20,12 +20,12 @@
                                     }
                                     setInterval(time, 1000);
                                 }}">
-                                    <span id="spanTimer"></span>
+                                    <span id="z"></span>
                                 </div>
                             </div>
                         </div>
                     </h5>
-                    
+
                     <div class="punch-info">
                         <div class="punch-hours">
                             <span>{{ $totalHours }} {{ \Str::plural(__('Hour'), intval($totalHours)) }}</span>
@@ -80,7 +80,7 @@
                                     aria-valuemin="0" aria-valuemax="100"></div>
                             </div>
                         </div>
-                        
+
                     </div>
                 </div>
             </div>
@@ -91,25 +91,25 @@
                     <h5 class="card-title">{{ __('Today Activity') }}</h5>
                     <ul class="res-activity-list">
                         @if (!empty($todayActivity))
-                            @foreach ($todayActivity as $item)
-                            <li>
-                                <p class="mb-0">{{ __('Punch In at') }}</p>
-                                <p class="res-activity-time">
-                                    <i class="fa-regular fa-clock"></i>
-                                    {{ !empty($item->startTime) ? $item->startTime->format('H:i A'): '' }}
-                                </p>
-                            </li>
-                            @if (!empty($item->endTime))
-                            <li>
-                                <p class="mb-0">{{ __('Punch Out at') }}</p>
-                                <p class="res-activity-time">
-                                    <i class="fa-regular fa-clock"></i>
-                                    {{ !empty($item->endTime) ? $item->endTime->format('H:i A'): '' }}
-                                </p>
-                            </li>
-                            <hr>
-                            @endif
-                            @endforeach
+                        @foreach ($todayActivity as $item)
+                        <li>
+                            <p class="mb-0">{{ __('Punch In at') }}</p>
+                            <p class="res-activity-time">
+                                <i class="fa-regular fa-clock"></i>
+                                {{ !empty($item->startTime) ? $item->startTime->format('H:i A'): '' }}
+                            </p>
+                        </li>
+                        @if (!empty($item->endTime))
+                        <li>
+                            <p class="mb-0">{{ __('Punch Out at') }}</p>
+                            <p class="res-activity-time">
+                                <i class="fa-regular fa-clock"></i>
+                                {{ !empty($item->endTime) ? $item->endTime->format('H:i A'): '' }}
+                            </p>
+                        </li>
+                        <hr>
+                        @endif
+                        @endforeach
                         @endif
                     </ul>
                 </div>
@@ -132,15 +132,15 @@
                     </thead>
                     <tbody>
                         @if (!empty($attendances))
-                            @foreach ($attendances as $i => $attendance)
-                            <tr>
-                                <td>{{ ++$i }}</td>
-                                <td>{{ format_date($attendance->created_at) }}</td>
-                                <td>{{ !empty($attendance->startTime) ? format_date($attendance->startTime,'H A'): '' }}</td>
-                                <td>{{ !empty($attendance->endTime) ? format_date($attendance->endTime,'H A'): ''}}</td>
-                                <td>{{ $attendance->totalHours }}</td>
-                            </tr>  
-                            @endforeach
+                        @foreach ($attendances as $i => $attendance)
+                        <tr>
+                            <td>{{ ++$i }}</td>
+                            <td>{{ format_date($attendance->created_at) }}</td>
+                            <td>{{ !empty($attendance->startTime) ? format_date($attendance->startTime,'H A'): '' }}</td>
+                            <td>{{ !empty($attendance->endTime) ? format_date($attendance->endTime,'H A'): ''}}</td>
+                            <td>{{ $attendance->totalHours }}</td>
+                        </tr>
+                        @endforeach
                         @endif
                     </tbody>
                 </table>
@@ -150,49 +150,48 @@
 
     <div class="modal custom-modal fade" id="clockin_modal" role="dialog">
         <div class="modal-dialog modal-dialog-centered" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <button
-                type="button"
-                class="btn-close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-            <div class="modal-body">
-              <form wire:submit.prevent="clockin" method="post" enctype="multipart/form-data">
-                @csrf
-                <div x-data="{forProject: false}">
-                    <x-form.input-block>
-                    <div class="status-toggle">
-                        <x-form.label>{{ __('For Project ?') }}</x-form.label>
-                        <x-form.input type="checkbox" id="forProject" class="check" @click="forProject =! forProject" name="forProject" wire:model="forProject" />
-                        <label for="forProject" class="checktoggle">checkbox</label>
-                    </div>
-                    </x-form.input-block>
-                    <div x-show="forProject">
-                        <x-form.input-block>
-                            <x-form.label required>{{ __('Project') }}</x-form.label>
-                            <select class="form-control" name="project" wire:model="project">
-                                <option value="">{{ __('Select Project') }}</option>
-                                @foreach (\Modules\Project\Models\Project::get() as $project)
-                                    <option value="{{ $project->id }}">{{ $project->name }}</option>
-                                @endforeach
-                            </select>
-                        </x-form.input-block>
-                    </div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
-                <div class="submit-section mb-3">
-                    <x-form.button class="btn btn-primary submit-btn">{{ __('Start') }}</x-form.button>
+                <div class="modal-body">
+                    <form wire:submit.prevent="clockin" method="post" enctype="multipart/form-data">
+                        @csrf
+                        <div x-data="{forProject: false}">
+                            <x-form.input-block>
+                                <div class="status-toggle">
+                                    <x-form.label>{{ __('For Project ?') }}</x-form.label>
+                                    <x-form.input type="checkbox" id="forProject" class="check" @click="forProject =! forProject" name="forProject" wire:model="forProject" />
+                                    <label for="forProject" class="checktoggle">checkbox</label>
+                                </div>
+                            </x-form.input-block>
+                            <div x-show="forProject">
+                                <x-form.input-block>
+                                    <x-form.label required>{{ __('Project') }}</x-form.label>
+                                    <select class="form-control" name="project" wire:model="project">
+                                        <option value="">{{ __('Select Project') }}</option>
+                                        @foreach (\Modules\Project\Models\Project::get() as $project)
+                                        <option value="{{ $project->id }}">{{ $project->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </x-form.input-block>
+                            </div>
+                        </div>
+                        <div class="submit-section mb-3">
+                            <x-form.button class="btn btn-primary submit-btn">{{ __('Start') }}</x-form.button>
+                        </div>
+                    </form>
                 </div>
-              </form>
             </div>
-          </div>
         </div>
     </div>
-      
+
     @script
     <script defer type="module">
         document.addEventListener('livewire:initialized', () => {

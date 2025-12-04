@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\AttendancesController;
 use App\Http\Controllers\Admin\DepartmentsController;
 use App\Http\Controllers\Admin\DesignationsController;
 use App\Http\Controllers\Admin\EmployeeDetailsController;
+use App\Http\Controllers\Api\BiometricController;
 
 include __DIR__ . '/auth.php';
 
@@ -94,3 +95,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('mail', [SettingsController::class, 'updateEmail'])->name('settings.mail.update');
     });
 });
+
+
+
+
