@@ -79,16 +79,12 @@ class EmployeeAttendance extends Component
         }
     }
 
-   
+
     #[On('refreshAttendance')]
     public function getAttendance()
     {
         $userId = auth()->user()->id;
-        $attendances = AttendanceTimestamp::where('user_id', $userId)
-                    ->whereNotNull('attendance_id');
-        $this->attendances = $attendances->get();
-        $this->todayActivity = $attendances->whereDate('created_at', Carbon::today())->get();
-        
+        $this->todayActivity = Attendance::select('punches')->where('user_id', $userId)->whereDate('date', Carbon::today())->get();  
     }
 
     #[On('fetchStatistics')]
@@ -125,10 +121,17 @@ class EmployeeAttendance extends Component
             }
         }
     }
-   
+
     public function render()
     {
         return view('livewire.employee-attendance');
+    }
+
+    public function mount()
+    {
+         $userId = auth()->user()->id;
+        $this->todayActivity = Attendance::select('punches')->where('user_id', $userId)->whereDate('date', Carbon::today())->get();  
+  
     }
     
 }

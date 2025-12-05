@@ -92,6 +92,7 @@ class EmployeesController extends Controller
             $user->assignRole(UserType::EMPLOYEE);
             $totalEmployees = User::where('type', UserType::EMPLOYEE)->where('is_active', true)->count();
             $empId = "EMP-" . pad_zeros(($totalEmployees + 1));
+            // dd($empId);
             EmployeeDetail::create([
                 'emp_id' => $empId,
                 'user_id' => $user->id,

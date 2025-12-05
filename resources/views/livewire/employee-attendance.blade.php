@@ -90,27 +90,33 @@
                 <div class="card-body">
                     <h5 class="card-title">{{ __('Today Activity') }}</h5>
                     <ul class="res-activity-list">
-                        @if (!empty($todayActivity))
-                        @foreach ($todayActivity as $item)
-                        <li>
-                            <p class="mb-0">{{ __('Punch In at') }}</p>
-                            <p class="res-activity-time">
-                                <i class="fa-regular fa-clock"></i>
-                                {{ !empty($item->startTime) ? $item->startTime->format('H:i A'): '' }}
-                            </p>
-                        </li>
-                        @if (!empty($item->endTime))
-                        <li>
-                            <p class="mb-0">{{ __('Punch Out at') }}</p>
-                            <p class="res-activity-time">
-                                <i class="fa-regular fa-clock"></i>
-                                {{ !empty($item->endTime) ? $item->endTime->format('H:i A'): '' }}
-                            </p>
-                        </li>
-                        <hr>
-                        @endif
+                      @php
+                        // punches JSON string
+                        $punchJson = $todayActivity[0]['punches'] ?? '[]';
+
+                        // decode it
+                        $punches = json_decode($punchJson, true);
+
+                        // safety check
+                        if (!is_array($punches)) {
+                            $punches = [];
+                        }
+                    @endphp
+
+                    @if (!empty($punches))
+                        @foreach ($punches as $item)
+                            <li>
+                                <p class="mb-0">{{ $item['type'] ?? 'N/A' }}</p>
+                                <p class="res-activity-time">
+                                    <i class="fa-regular fa-clock"></i>
+                                    {{ \Carbon\Carbon::parse($item['punch_time'])->format('h:i:s A') }}
+                                </p>
+                            </li>
+                            <hr>
                         @endforeach
-                        @endif
+                    @endif
+
+
                     </ul>
                 </div>
             </div>

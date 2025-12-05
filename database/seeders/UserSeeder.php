@@ -21,10 +21,10 @@ class UserSeeder extends Seeder
     {
         User::insert([
             [
-                'firstname' => 'Mushe',
-                'lastname' => 'Abdul-Hakim',
-                'email' => 'superadmin@smarthr.com',
-                'password' => Hash::make('password'),
+                'firstname' => 'Aditya',
+                'lastname' => 'Sahgal',
+                'email' => 'superadmin@gmail.com',
+                'password' => Hash::make('Admin@123'),
                 'email_verified_at' => now(),
                 'type' => UserType::SUPERADMIN,
                 'is_active' => 1,
