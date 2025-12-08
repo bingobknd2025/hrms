@@ -90,7 +90,7 @@
                 <div class="card-body">
                     <h5 class="card-title">{{ __('Today Activity') }}</h5>
                     <ul class="res-activity-list">
-                      @php
+                    @php
                         // punches JSON string
                         $punchJson = $todayActivity[0]['punches'] ?? '[]';
 
@@ -106,7 +106,7 @@
                     @if (!empty($punches))
                         @foreach ($punches as $item)
                             <li>
-                                <p class="mb-0">{{ $item['type'] ?? 'N/A' }}</p>
+                                <p class="mb-0">{{ $item['device'] ?? 'N/A' }}</p>
                                 <p class="res-activity-time">
                                     <i class="fa-regular fa-clock"></i>
                                     {{ \Carbon\Carbon::parse($item['punch_time'])->format('h:i:s A') }}
@@ -137,18 +137,17 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if (!empty($attendances))
-                        @foreach ($attendances as $i => $attendance)
-                        <tr>
-                            <td>{{ ++$i }}</td>
-                            <td>{{ format_date($attendance->created_at) }}</td>
-                            <td>{{ !empty($attendance->startTime) ? format_date($attendance->startTime,'H A'): '' }}</td>
-                            <td>{{ !empty($attendance->endTime) ? format_date($attendance->endTime,'H A'): ''}}</td>
-                            <td>{{ $attendance->totalHours }}</td>
-                        </tr>
-                        @endforeach
-                        @endif
+                    @foreach ($attendances as $i => $attendance)
+                    <tr>
+                        <td>{{ ++$i }}</td>
+                        <td>{{ $attendance->date }}</td>
+                        <td>{{ $attendance->startTime ? $attendance->startTime->format('h:i A') : '-' }}</td>
+                        <td>{{ $attendance->endTime ? $attendance->endTime->format('h:i A') : '-' }}</td>
+                        <td>{{ $attendance->totalHours }}</td>
+                    </tr>
+                    @endforeach
                     </tbody>
+
                 </table>
             </div>
         </div>

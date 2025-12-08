@@ -79,40 +79,47 @@
                             <tr>
                                 <th>{{ __('Employee') }}</th>
                                 @for ($day = 1; $day <= $days_in_month; $day++)
-                                <th>{{$day}}</th>
+                                    <th>{{ $day }}</th>
                                 @endfor
                             </tr>
                         </thead>
+
                         <tbody>
-                            @if (!empty($employees))
-                                @foreach ($employees as $employee)
+                            @foreach ($employees as $employee)
                                 <tr>
-                                    <td>    
-                                    @php
-                                        $img = !empty($employee->avatar) ? asset('storage/users/'.$employee->avatar): asset('images/user.jpg');
-                                        $link = route('employees.show', ['employee' => Crypt::encrypt($employee->id)]);
-                                    @endphp 
-                                    {!! \Spatie\Menu\Laravel\Html::userAvatar($employee->fullname, $img, $link) !!}
+                                    <td>
+                                        @php
+                                            $img = !empty($employee->avatar) 
+                                                ? asset('storage/users/'.$employee->avatar)
+                                                : asset('images/user.jpg');
+
+                                            $link = route('employees.show', ['employee' => Crypt::encrypt($employee->id)]);
+                                        @endphp
+
+                                        {!! \Spatie\Menu\Laravel\Html::userAvatar($employee->fullname, $img, $link) !!}
                                     </td>
+
                                     @for ($day = 1; $day <= $days_in_month; $day++)
                                         @php
-                                            $currentMonth = request()->month ?? now()->month;
-                                            $year = request()->year ?? now()->year;
-                                            $attendance = $employee->attendances()
-                                                    ->whereDay('created_at', $day)
-                                                    ->whereMonth('created_at', $currentMonth)
-                                                    ->whereYear('created_at', $year)
-                                                    ->first();
+                                            $attendanceId = $employee->daily[$day] ?? false;
                                         @endphp
-                                        @if (!empty($attendance->startDate) && !empty($attendance->endDate))
-                                        <td><a href="javascript:void(0);" data-ajax-modal="true" data-title="{{ __('Attendance Details') }}" data-size="lg" data-url="{{ route('attendance.details', $attendance->id) }}"><i class="fa-solid fa-check text-success"></i></a></td>
-                                        @else
-                                        <td><a href="javascript:void(0);"><i class="fa-solid fa-close text-danger"></i></a></td>
-                                        @endif
+
+                                        <td>
+                                            @if ($attendanceId)
+                                                <a href="javascript:void(0);"
+                                                data-ajax-modal="true"
+                                                data-title="{{ __('Attendance Details') }}"
+                                                data-size="lg"
+                                                data-url="{{ route('attendance.details', $attendanceId) }}">
+                                                    <i class="fa-solid fa-check text-success"></i>
+                                                </a>
+                                            @else
+                                                <i class="fa-solid fa-close text-danger"></i>
+                                            @endif
+                                        </td>
                                     @endfor
                                 </tr>
-                                @endforeach
-                            @endif
+                            @endforeach
                         </tbody>
                     </table>
                 </div>

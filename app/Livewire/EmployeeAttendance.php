@@ -35,13 +35,8 @@ class EmployeeAttendance extends Component
                     ->whereDate('created_at', Carbon::today())->first();
             if(!empty($todayAttendance)){
                 $attendance = $todayAttendance;
-            }else{
-                $attendance = Attendance::create([
-                    'user_id' => $user->id,
-                    'startDate' => now(),
-                    'endDate' => null,
-                ]);
             }
+
             AttendanceTimestamp::create([
                 'user_id' => $user->id,
                 'attendance_id' => $attendance->id,
@@ -84,7 +79,68 @@ class EmployeeAttendance extends Component
     public function getAttendance()
     {
         $userId = auth()->user()->id;
+       $this->getAttendances( $userId);
+
+        
+
+    }
+
+    public function getAttendances($userId = null){
         $this->todayActivity = Attendance::select('punches')->where('user_id', $userId)->whereDate('date', Carbon::today())->get();  
+        // $this->attendances = Attendance::select('punches')->where('user_id', $userId)->get();  
+
+         $rawAttendances = Attendance::where('user_id', $userId)
+            ->orderBy('created_at', 'ASC')
+            ->get();
+
+        $finalAttendances = [];
+
+        foreach ($rawAttendances as $record) {
+
+            // Decode punches JSON
+            $punches = json_decode($record->punches, true);
+
+            if (!is_array($punches)) {
+                $punches = [];
+            }
+
+            // Convert punch_time into Carbon object
+            foreach ($punches as &$p) {
+                $p['dt'] = \Carbon\Carbon::parse($p['punch_time']);
+            }
+            unset($p);
+
+            // FIRST MAIN_DOOR = Punch In
+            $punchIn = collect($punches)
+                ->where('device', 'MAIN_DOOR')
+                ->sortBy('dt')         // ascending
+                ->first();
+
+            // LAST OUT_FLOOR = Punch Out
+            $punchOut = collect($punches)
+                ->where('device', 'OUT_FLOOR')
+                ->sortByDesc('dt')     // descending
+                ->first();
+
+            // Prepare variables
+            $startTime = $punchIn['dt'] ?? null;
+            $endTime   = $punchOut['dt'] ?? null;
+
+            // Total hours calculation
+            $totalHours = null;
+            if ($startTime && $endTime) {
+                $totalHours = $endTime->diff($startTime)->format('%H:%I');
+            }
+
+            // Push final formatted data
+            $finalAttendances[] = (object)[
+                'date'       => $record->created_at->toDateString(),
+                'startTime'  => $startTime,
+                'endTime'    => $endTime,
+                'totalHours' => $totalHours,
+            ];
+        }
+        $this->attendances = $finalAttendances;
     }
 
     #[On('fetchStatistics')]
@@ -129,8 +185,11 @@ class EmployeeAttendance extends Component
 
     public function mount()
     {
+        // $userId = auth()->user()->id;
+        // $this->todayActivity = Attendance::select('punches')->where('user_id', $userId)->whereDate('date', Carbon::today())->get(); 
+        // $this->attendances = $finalAttendances;
          $userId = auth()->user()->id;
-        $this->todayActivity = Attendance::select('punches')->where('user_id', $userId)->whereDate('date', Carbon::today())->get();  
+       $this->getAttendances( $userId);
   
     }
     

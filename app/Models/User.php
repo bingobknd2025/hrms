@@ -37,6 +37,8 @@ class User extends Authenticatable
         'layout_width', 'layout_position', 'topbar_color', 'sidebar_size', 'sidebar_view', 'sidebar_color',
     ];
 
+     public $daily = []; 
+
    
     public function chatMessages()
     {
