@@ -30,6 +30,10 @@ return new class extends Migration
             $table->string('dial_code')->nullable();
             $table->integer('created_by')->nullable();
             $table->boolean('is_active')->nullable()->default(false);
+            $table->string('last_login_ip')->nullable();
+            $table->string('last_login_country')->nullable();
+            $table->string('last_login_city')->nullable();
+            $table->timestamp('last_login_at')->nullable();
             $table->string('lang')->nullable();
             $table->string('layout')->nullable();
             $table->string('color_scheme')->nullable();

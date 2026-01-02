@@ -10,7 +10,7 @@
         <x-form.input-block>
             <x-form.label>{{ __('Email Address') }}</x-form.label>
             <x-form.input type="email" name="email" tabindex="1" value="{{ old('email') }}"
-                placeholder="example@smarthr.com" />
+                placeholder="example@bingosg.com" />
         </x-form.input-block>
 
         <x-form.input-block>
@@ -27,7 +27,7 @@
             </div>
             <div class="position-relative">
                 <x-form.input type="password" id="password" name="password" tabindex="2"
-                    placeholder="*****************" />
+                    placeholder="********" />
                 <span class="fa-solid fa-eye-slash" id="toggle-password"></span>
             </div>
         </x-form.input-block>

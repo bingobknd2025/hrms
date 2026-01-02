@@ -103,8 +103,6 @@ class AttendancesController extends Controller
         ));
     }
 
-
-
     public function attendanceDetails(Request $request, Attendance $attendance)
     {
         $attendanceActivity = $attendance->timestamps()->get();
