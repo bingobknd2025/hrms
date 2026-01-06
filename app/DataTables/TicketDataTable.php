@@ -34,7 +34,7 @@ class TicketDataTable extends DataTable
             })
             ->addColumn('tk_id', function($row){
                 $param = ['ticket' => Crypt::encrypt($row->id)];
-                return '<a href="'.route('tickets.show',$param).'">'.$row->tk_id.'</a>';
+                return '<a href="'.route('tickets.show',$param).'" style="text-decoration: underline;">'.$row->tk_id.'</a>';
             })
             ->editColumn('status', function($row){
                 return $row->status->name;
