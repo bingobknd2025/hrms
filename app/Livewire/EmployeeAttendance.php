@@ -112,7 +112,7 @@ class EmployeeAttendance extends Component
 
             // FIRST MAIN_DOOR = Punch In
             $punchIn = collect($punches)
-                ->where('device', 'MAIN_DOOR')
+                ->where('device', 'IN_FLOOR')
                 ->sortBy('dt')         // ascending
                 ->first();
 
@@ -143,23 +143,73 @@ class EmployeeAttendance extends Component
         $this->attendances = $finalAttendances;
     }
 
+    // #[On('fetchStatistics')]
+    // public function statistics()
+    // {
+    //     $userId = auth()->user()->id;
+    //     $userAttendances = AttendanceTimestamp::where('user_id', $userId)
+    //                     ->whereNotNull('attendance_id');
+    //     $this->totalHoursToday = $userAttendances->whereDate('created_at', Carbon::today())
+    //                     ->get()
+    //                     ->sum('totalHours');
+    //     $this->totalHoursThisMonth = $userAttendances->whereMonth('created_at', Carbon::now())
+    //                     ->get()
+    //                     ->sum('totalHours');
+    //     $this->totalHoursThisWeek = $userAttendances
+    //                     ->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
+    //                     ->get()
+    //                     ->sum('totalHours');
+    // }
+
+    private function calculateTotalHours($timestamps)
+    {
+        $totalSeconds = 0;
+
+        foreach ($timestamps as $ts) {
+            $start = Carbon::parse($ts->startTime);
+            $end   = $ts->endTime ? Carbon::parse($ts->endTime) : now();
+
+            if ($end->greaterThan($start)) {
+                $totalSeconds += $end->diffInSeconds($start);
+            }
+        }
+
+        // Convert to hours (decimal, e.g. 7.50)
+        return round($totalSeconds / 3600, 2);
+
+        // OR return HH:MM format instead:
+        // return gmdate('H:i', $totalSeconds);
+    }
+
+
     #[On('fetchStatistics')]
     public function statistics()
     {
         $userId = auth()->user()->id;
-        $userAttendances = AttendanceTimestamp::where('user_id', $userId)
-                        ->whereNotNull('attendance_id');
-        $this->totalHoursToday = $userAttendances->whereDate('created_at', Carbon::today())
-                        ->get()
-                        ->sum('totalHours');
-        $this->totalHoursThisMonth = $userAttendances->whereMonth('created_at', Carbon::now())
-                        ->get()
-                        ->sum('totalHours');
-        $this->totalHoursThisWeek = $userAttendances
-                        ->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
-                        ->get()
-                        ->sum('totalHours');
+
+        $this->totalHoursToday = $this->calculateTotalHours(
+            AttendanceTimestamp::where('user_id', $userId)
+                ->whereDate('startTime', Carbon::today())
+                ->get()
+        );
+
+        $this->totalHoursThisWeek = $this->calculateTotalHours(
+            AttendanceTimestamp::where('user_id', $userId)
+                ->whereBetween('startTime', [
+                    Carbon::now()->startOfWeek(),
+                    Carbon::now()->endOfWeek()
+                ])
+                ->get()
+        );
+
+        $this->totalHoursThisMonth = $this->calculateTotalHours(
+            AttendanceTimestamp::where('user_id', $userId)
+                ->whereMonth('startTime', Carbon::now()->month)
+                ->whereYear('startTime', Carbon::now()->year)
+                ->get()
+        );
     }
+
 
     #[On('IsClockedIn')]
     public function getClockInData()

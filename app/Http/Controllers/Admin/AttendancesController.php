@@ -85,7 +85,8 @@ class AttendancesController extends Controller
                     if (is_array($punches)) {
 
                         $firstMainDoor = collect($punches)
-                            ->where('type', 'MAIN_DOOR')
+                            // ->where('type', 'MAIN_DOOR')
+                            ->where('type', 'IN_FLOOR')
                             ->sortBy('punch_time')
                             ->first();
 
