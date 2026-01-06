@@ -58,7 +58,7 @@
             </div>
             <div class="input-block mb-3">
                 <label class="col-form-label">{{ __('Attachment') }} <small class="text-info">{{ __('You can upload multiple files') }}</small></label>
-                <x-form.input type="file" name="ticketFiles" multiple />
+                <x-form.input type="file" name="ticketFiles[]" multiple />
             </div>
         </div>
         <div class="submit-section my-2">

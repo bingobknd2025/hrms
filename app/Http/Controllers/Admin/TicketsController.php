@@ -59,12 +59,24 @@ class TicketsController extends Controller
             'priority' => $request->priority ?? GeneralPriority::MEDIUM,
             'endDate' => $request->endDate
         ]);
-        $ticketFiles = $request->ticketFiles ?? [];
-        if(!empty($ticketFiles) && $request->hasFile('ticketFiles') && count($ticketFiles) > 0){
-            foreach($ticketFiles as $file){
+        // $ticketFiles = $request->ticketFiles ?? [];
+        // if(!empty($ticketFiles) && $request->hasFile('ticketFiles') && count($ticketFiles) > 0){
+        //     foreach($ticketFiles as $file){
+        //         $ticket->addMedia($file)->toMediaCollection('ticket-attachments');
+        //     }
+        // }
+        if ($request->hasFile('ticketFiles')) {
+            $files = $request->file('ticketFiles');
+
+            if (!is_array($files)) {
+                $files = [$files];
+            }
+
+            foreach ($files as $file) {
                 $ticket->addMedia($file)->toMediaCollection('ticket-attachments');
             }
         }
+
         Mail::to(User::where('type',UserType::SUPERADMIN)->get())
             ->send(
             (new NewTicket($ticket))
