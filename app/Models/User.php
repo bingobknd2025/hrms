@@ -33,8 +33,21 @@ class User extends Authenticatable
         'dial_code', 'phone',
         'avatar',
         'created_by',
-        'is_active','is_online', 'lang', 'layout', 'color_scheme',
-        'layout_width', 'layout_position', 'topbar_color', 'sidebar_size', 'sidebar_view', 'sidebar_color',
+        'is_active',
+        'is_online',
+        'last_login_ip',
+        'last_login_country',
+        'last_login_city',
+        'last_login_at',
+        'lang',
+        'layout', 
+        'color_scheme',
+        'layout_width', 
+        'layout_position', 
+        'topbar_color', 
+        'sidebar_size', 
+        'sidebar_view', 
+        'sidebar_color',
     ];
 
      public $daily = []; 

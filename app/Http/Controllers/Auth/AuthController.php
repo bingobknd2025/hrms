@@ -10,6 +10,7 @@ use App\Http\Controllers\BaseController;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 
 class AuthController extends BaseController
 {
@@ -20,26 +21,90 @@ class AuthController extends BaseController
         return view('auth.login', $this->data);
     }
 
+    // public function loginAuth(Request $request)
+    // {
+    //     $request->validate([
+    //         'email' => 'required|email',
+    //         'password' => 'required'
+    //     ]);
+    //     $user = User::where('email', $request->email)->first();
+    //     if (!empty($user)) {
+    //         if ($user->is_active === 1) {
+    //             $credentials = $request->only('email', 'password');
+    //             if (Auth::attempt($credentials)) {
+    //                 $user->update([
+    //                     'is_online' => true,
+    //                 ]);
+    //                 return redirect()->route('dashboard');
+    //             }
+    //             return back()->withErrors(['password' => 'Incorrect Password']);
+    //         }
+    //         return back()->withErrors(['email' => 'Your account is disabled.']);
+    //     }
+    //     return back()->withErrors(['email' => 'Account could not be found.']);
+    // }
+
     public function loginAuth(Request $request)
     {
         $request->validate([
             'email' => 'required|email',
             'password' => 'required'
         ]);
+
         $user = User::where('email', $request->email)->first();
+
         if (!empty($user)) {
             if ($user->is_active === 1) {
+
                 $credentials = $request->only('email', 'password');
+
                 if (Auth::attempt($credentials)) {
-                    $user->update([
-                        'is_online' => true,
-                    ]);
+
+                    $user = Auth::user(); 
+                    $ip = $request->ip();
+
+                    try {
+                        $response = Http::timeout(2)->get("https://ipapi.co/{$ip}/json");
+                        // dd($response);
+
+                        if ($response->successful()) {
+                            $data = $response->json();
+ 
+                           $user->update([
+                                'last_login_ip'      => $ip,
+                                'last_login_country' => $data['country_name'] ?? null,
+                                'last_login_city'    => $data['city'] ?? null,
+                                'last_login_at'      => now(),
+                                'is_online'          => true,
+                            ]);
+
+                            // dd($afterupdate);
+                        } else {
+                            // fallback if API fails
+                            $user->update([
+                                'last_login_ip' => $ip,
+                                'last_login_at' => now(),
+                                'is_online'     => true,
+                            ]);
+                        }
+                    } catch (\Exception $e) {
+                        // Never break login
+                        $user->update([
+                            'last_login_ip' => $ip,
+                            'last_login_at' => now(),
+                            'is_online'     => true,
+                        ]);
+                    }
+
                     return redirect()->route('dashboard');
                 }
+
                 return back()->withErrors(['password' => 'Incorrect Password']);
             }
+
             return back()->withErrors(['email' => 'Your account is disabled.']);
         }
+
         return back()->withErrors(['email' => 'Account could not be found.']);
     }
 
@@ -105,4 +170,18 @@ class AuthController extends BaseController
         $request->session()->regenerateToken();
         return redirect('login');
     }
+
+    // public function logout(Request $request)
+    // {
+    //     auth()->user()->update([
+    //         'is_online' => false,
+    //     ]);
+
+    //     auth()->logout();
+    //     $request->session()->invalidate();
+    //     $request->session()->regenerateToken();
+
+    //     return redirect('login');
+    // }
+
 }
