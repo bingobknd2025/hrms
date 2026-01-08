@@ -24,6 +24,7 @@ class DashboardController extends BaseController
         {
             return view('pages.employees.dashboard',$this->data);
         }
+        
         $projects = null;
         if(!empty(module('Project')) && module('Project')->isEnabled()){
             $projects = \Modules\Project\Models\Project::get();

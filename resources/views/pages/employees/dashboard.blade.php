@@ -11,8 +11,6 @@
 
         </x-breadcrumb>
         <!-- /Page Header -->
-
-
         <livewire:employee-attendance />
 
     </div>
