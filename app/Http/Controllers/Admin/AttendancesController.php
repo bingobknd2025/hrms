@@ -113,115 +113,184 @@ class AttendancesController extends Controller
         ));
     }
 
+    // public function attendanceDetails(Request $request, Attendance $attendance)
+    // {
+    //     // $attendanceActivity = $attendance->timestamps()->get();
+    //     // $totalHours = $attendance->timestamps()->get()->sum('totalHours');
+    //     // return view('pages.attendances.attendance-details', compact(
+    //     //     'attendance',
+    //     //     'totalHours',
+    //     //     'attendanceActivity'
+    //     // ));
+
+    //     // $punches = collect(json_decode($attendance->punches ?? '[]', true))
+    //     //     ->sortBy('punch_time')
+    //     //     ->values();
+
+    //     // $totalMinutes = 0;
+    //     // $lastInTime = null;
+
+    //     // $firstIn = null;
+    //     // $lastOut = null;
+
+    //     // foreach ($punches as $punch) {
+
+    //     //     $time = Carbon::parse($punch['punch_time']);
+
+    //     //     // Capture FIRST IN
+    //     //     if ($punch['device'] === 'IN_FLOOR' && !$firstIn) {
+    //     //         $firstIn = $punch;
+    //     //     }
+
+    //     //     if ($punch['device'] === 'IN_FLOOR') {
+
+    //     //         // Open session only if none open
+    //     //         if ($lastInTime === null) {
+    //     //             $lastInTime = $time;
+    //     //         }
+    //     //     } elseif ($punch['device'] === 'OUT_FLOOR') {
+
+    //     //         // Capture LAST OUT
+    //     //         $lastOut = $punch;
+
+    //     //         // Close session only if valid
+    //     //         if ($lastInTime !== null && $time->greaterThan($lastInTime)) {
+    //     //             $totalMinutes += $time->diffInMinutes($lastInTime);
+    //     //             $lastInTime = null;
+    //     //         }
+    //     //     }
+    //     // }
+
+    //     // // Convert minutes → hours (SAFE)
+    //     // $totalHours = round($totalMinutes / 60, 2);
+    //     // $totalHours = max(0, $totalHours);
+
+    //     $attendanceDate = Carbon::parse(
+    //         $attendance->date
+    //     )->toDateString();
+
+    //     // Decode & FILTER punches by SAME DATE
+    //     $punches = collect(json_decode($attendance->punches ?? '[]', true))
+    //         ->filter(function ($punch) use ($attendanceDate) {
+    //             return Carbon::parse($punch['punch_time'])->toDateString() === $attendanceDate;
+    //         })
+    //         ->sortBy('punch_time')
+    //         ->values();
+
+    //     $totalMinutes = 0;
+    //     $openInTime = null;
+
+    //     $firstIn = null;
+    //     $lastOut = null;
+
+    //     foreach ($punches as $punch) {
+
+    //         $time = Carbon::parse($punch['punch_time']);
+
+    //         if ($punch['device'] === 'IN_FLOOR') {
+
+    //             if (!$firstIn) {
+    //                 $firstIn = $punch;
+    //             }
+
+    //             // Open only if no session open
+    //             if ($openInTime === null) {
+    //                 $openInTime = $time;
+    //             }
+    //         }
+
+    //         if ($punch['device'] === 'OUT_FLOOR' && $openInTime !== null) {
+
+    //             // SAFETY CHECK — NEVER allow reverse diff
+    //             if ($time->greaterThan($openInTime)) {
+    //                 $totalMinutes += $openInTime->diffInMinutes($time);
+    //                 $lastOut = $punch;
+    //             }
+
+    //             // Close session
+    //             $openInTime = null;
+    //         }
+    //     }
+
+    //     // FINAL GUARANTEE
+    //     $totalMinutes = max(0, $totalMinutes);
+    //     $totalHours = round($totalMinutes / 60, 2);
+
+    //     return view('pages.attendances.attendance-details', [
+    //         'attendance' => $attendance,
+    //         'punches'    => $punches,
+    //         'firstIn'    => $firstIn,
+    //         'lastOut'    => $lastOut,
+    //         'totalHours' => $totalHours,
+    //     ]);
+    // }
+
     public function attendanceDetails(Request $request, Attendance $attendance)
     {
-        // $attendanceActivity = $attendance->timestamps()->get();
-        // $totalHours = $attendance->timestamps()->get()->sum('totalHours');
-        // return view('pages.attendances.attendance-details', compact(
-        //     'attendance',
-        //     'totalHours',
-        //     'attendanceActivity'
-        // ));
+        $date = Carbon::parse($attendance->date)->toDateString();
 
-        // $punches = collect(json_decode($attendance->punches ?? '[]', true))
-        //     ->sortBy('punch_time')
-        //     ->values();
+        $calc = $this->calculateMainDoorToLastOut(
+            $attendance->punches,
+            $date
+        );
 
-        // $totalMinutes = 0;
-        // $lastInTime = null;
+        return view('pages.attendances.attendance-details', [
+            'attendance'     => $attendance,
+            'punches'        => $calc['punches'],
+            'firstMainDoor'  => $calc['firstMainDoor'],
+            'lastOutFloor'   => $calc['lastOutFloor'],
+            'totalHours'     => $calc['totalHours'],
+        ]);
+    }
 
-        // $firstIn = null;
-        // $lastOut = null;
-
-        // foreach ($punches as $punch) {
-
-        //     $time = Carbon::parse($punch['punch_time']);
-
-        //     // Capture FIRST IN
-        //     if ($punch['device'] === 'IN_FLOOR' && !$firstIn) {
-        //         $firstIn = $punch;
-        //     }
-
-        //     if ($punch['device'] === 'IN_FLOOR') {
-
-        //         // Open session only if none open
-        //         if ($lastInTime === null) {
-        //             $lastInTime = $time;
-        //         }
-        //     } elseif ($punch['device'] === 'OUT_FLOOR') {
-
-        //         // Capture LAST OUT
-        //         $lastOut = $punch;
-
-        //         // Close session only if valid
-        //         if ($lastInTime !== null && $time->greaterThan($lastInTime)) {
-        //             $totalMinutes += $time->diffInMinutes($lastInTime);
-        //             $lastInTime = null;
-        //         }
-        //     }
-        // }
-
-        // // Convert minutes → hours (SAFE)
-        // $totalHours = round($totalMinutes / 60, 2);
-        // $totalHours = max(0, $totalHours);
-
-        $attendanceDate = Carbon::parse(
-            $attendance->date
-        )->toDateString();
-
-        // Decode & FILTER punches by SAME DATE
-        $punches = collect(json_decode($attendance->punches ?? '[]', true))
-            ->filter(function ($punch) use ($attendanceDate) {
-                return Carbon::parse($punch['punch_time'])->toDateString() === $attendanceDate;
-            })
+    private function calculateMainDoorToLastOut(?string $punchesJson, string $date): array
+    {
+        $punches = collect(json_decode($punchesJson ?? '[]', true))
+            ->filter(
+                fn($p) =>
+                isset($p['device'], $p['punch_time']) &&
+                    Carbon::parse($p['punch_time'])->toDateString() === $date
+            )
             ->sortBy('punch_time')
             ->values();
 
-        $totalMinutes = 0;
-        $openInTime = null;
+        //FIRST MAIN_DOOR
+        $firstMainDoor = $punches
+            ->where('device', 'MAIN_DOOR')
+            ->first();
 
-        $firstIn = null;
-        $lastOut = null;
+        //LAST OUT_FLOOR
+        $lastOutFloor = $punches
+            ->where('device', 'OUT_FLOOR')
+            ->last();
 
-        foreach ($punches as $punch) {
-
-            $time = Carbon::parse($punch['punch_time']);
-
-            if ($punch['device'] === 'IN_FLOOR') {
-
-                if (!$firstIn) {
-                    $firstIn = $punch;
-                }
-
-                // Open only if no session open
-                if ($openInTime === null) {
-                    $openInTime = $time;
-                }
-            }
-
-            if ($punch['device'] === 'OUT_FLOOR' && $openInTime !== null) {
-
-                // SAFETY CHECK — NEVER allow reverse diff
-                if ($time->greaterThan($openInTime)) {
-                    $totalMinutes += $openInTime->diffInMinutes($time);
-                    $lastOut = $punch;
-                }
-
-                // Close session
-                $openInTime = null;
-            }
+        if (!$firstMainDoor || !$lastOutFloor) {
+            return [
+                'firstMainDoor' => null,
+                'lastOutFloor'  => null,
+                'totalHours'    => 0,
+                'punches'       => $punches,
+            ];
         }
 
-        // FINAL GUARANTEE
-        $totalMinutes = max(0, $totalMinutes);
-        $totalHours = round($totalMinutes / 60, 2);
+        $start = Carbon::parse($firstMainDoor['punch_time']);
+        $end   = Carbon::parse($lastOutFloor['punch_time']);
 
-        return view('pages.attendances.attendance-details', [
-            'attendance' => $attendance,
-            'punches'    => $punches,
-            'firstIn'    => $firstIn,
-            'lastOut'    => $lastOut,
-            'totalHours' => $totalHours,
-        ]);
+        //SAFETY CHECK
+        if ($end->lessThanOrEqualTo($start)) {
+            return [
+                'firstMainDoor' => $firstMainDoor,
+                'lastOutFloor'  => $lastOutFloor,
+                'totalHours'    => 0,
+                'punches'       => $punches,
+            ];
+        }
+
+        return [
+            'firstMainDoor' => $firstMainDoor,
+            'lastOutFloor'  => $lastOutFloor,
+            'totalHours'    => round($start->diffInSeconds($end) / 3600, 2),
+            'punches'       => $punches,
+        ];
     }
 }

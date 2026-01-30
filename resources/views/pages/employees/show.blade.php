@@ -158,7 +158,7 @@
                   <div class="card-body">
                     <h3 class="card-title">
                       {{ __('Personal Informations') }}
-                      <a href="javascript:void(0)" data-url="{{ route('employee.personal-info', $employee->id) }}"
+                      <a href="javascript:void(0)" data-url="{{ route('employee.personal-info', $user->id) }}"
                         class="edit-icon" data-title="{{ __('Personal Information') }}"
                         data-ajax-modal="true" data-size="lg"
                         >
@@ -223,7 +223,7 @@
                   <div class="card-body">
                     <h3 class="card-title">
                       {{ __('Emergency Contact') }}
-                      <a href="javascript:void(0)" data-url="{{ route('employee.emergency-contacts', $employee->id) }}"
+                      <a href="javascript:void(0)" data-url="{{ route('employee.emergency-contacts', $user->id) }}"
                           class="edit-icon" data-title="{{ __('Emergency Contacts') }}"
                           data-ajax-modal="true" data-size="lg"
                           >
@@ -285,7 +285,7 @@
                     <h3 class="card-title">
                       {{ __('Education Informations') }}
                       <a
-                      href="javascript:void(0)" data-url="{{ route('employee.education', $employee->id) }}"
+                      href="javascript:void(0)" data-url="{{ route('employee.education', $user->id) }}"
                         class="edit-icon" data-title="{{ __('Education Information') }}"
                         data-ajax-modal="true" data-size="lg"
                         data-bs-toggle="tooltip" data-bs-title="Education"
@@ -326,7 +326,7 @@
                     <h3 class="card-title">
                       {{ __('Work Experience') }}
                       <a
-                      href="javascript:void(0)" data-url="{{ route('employee.experience', $employee->id) }}"
+                      href="javascript:void(0)" data-url="{{ route('employee.experience', $user->id) }}"
                           class="edit-icon" data-title="{{ __('Working Experience Information') }}"
                           data-ajax-modal="true" data-size="lg"
                           data-bs-toggle="tooltip" data-bs-title="Working Experience"
@@ -432,7 +432,7 @@
             <div class="card">
               <div class="card-body">
                 <h3 class="card-title">{{ __('Basic Salary Information') }}</h3>
-                <form action="{{ route('employee.salary-setting', $employee->id) }}" method="post">
+                <form action="{{ route('employee.salary-setting', $user->id) }}" method="post">
                   @csrf
                   <div class="row">
                     <input type="hidden" name="salary_detail_id" value="{{ !empty($employee->salaryDetails) ? $employee->salaryDetails->id : '' }}">

@@ -10,7 +10,7 @@ class Attendance extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
+        'user_id','date','punches'
     ];
 
     public function user(){
@@ -20,5 +20,7 @@ class Attendance extends Model
     public function timestamps(){
         return $this->hasMany(AttendanceTimestamp::class);
     }
+
+   
 
 }

@@ -4,327 +4,226 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use App\Models\Attendance;
-use Livewire\Attributes\Js;
-use Livewire\Attributes\On;
 use Illuminate\Support\Carbon;
-use App\Models\AttendanceTimestamp;
-use Illuminate\Support\Facades\Crypt;
 
 class EmployeeAttendance extends Component
 {
-    public $forProject, $project, $clockedIn, $timeStarted;
-    public $totalHours = 0;
-    public $timeId = null;
-    public $attendances, $todayActivity;
+    public array $attendances = [];
+    public array $todayActivity = [];
+    public bool $isManualUser = false;
+    public bool $isClockedIn = false;
 
-    public $totalHoursToday;
-    public $totalHoursThisMonth;
-    public $totalHoursThisWeek;
+    public float $totalHours = 0;
+    public float $totalHoursToday = 0;
+    public float $totalHoursThisWeek = 0;
+    public float $totalHoursThisMonth = 0;
 
-    public function clockin()
-    {
-        try {
+    /**
+     * =====================================
+     * CORE CALCULATION (ADMIN-SAME LOGIC)
+     * =====================================
+     */
+    // private function calculateFromPunchesJson(?string $punchesJson, string $date): array
+    // {
+    //     $punches = collect(json_decode($punchesJson ?? '[]', true))
+    //         ->filter(
+    //             fn($p) =>
+    //             isset($p['device'], $p['punch_time']) &&
+    //                 Carbon::parse($p['punch_time'])->toDateString() === $date
+    //         )
+    //         ->sortBy('punch_time')
+    //         ->values();
 
-            $user  = auth()->user();
-            if ($this->forProject) {
-                $this->validate([
-                    'project' => 'required',
-                ]);
-            }
-            $todayAttendance = Attendance::where('user_id', $user->id)
-                ->whereDate('created_at', Carbon::today())->first();
-            if (!empty($todayAttendance)) {
-                $attendance = $todayAttendance;
-            }
+    //     $firstMainDoor = $punches->where('device', 'MAIN_DOOR')->first();
+    //     $lastOutFloor  = $punches->where('device', 'OUT_FLOOR')->last();
 
-            AttendanceTimestamp::create([
-                'user_id' => $user->id,
-                'attendance_id' => $attendance->id,
-                'project_id' => $this->project,
-                'startTime' => now(),
-                'endTime' => null,
-                'location' => $user->employeeDetail->department->location ?? null,
-                'billable' => false,
-                'ip' => request()->ip() ?? null,
-            ]);
-            $this->dispatch('IsClockedIn');
-            $this->dispatch('refreshAttendance');
-            $this->dispatch('Notification', __('You have clockin successfully'));
-            $this->js("bootstrap.Modal.getInstance(document.getElementById('clockin_modal')).hide()");
-        } catch (\Exception $e) {
-            $this->dispatch('Notification', __('Something went wrong'));
-        }
+    //     if (!$firstMainDoor || !$lastOutFloor) {
+    //         return [
+    //             'punchIn'    => null,
+    //             'punchOut'   => null,
+    //             'totalHours' => 0,
+    //             'punches'    => $punches->toArray(),
+    //         ];
+    //     }
+
+    //     $start = Carbon::parse($firstMainDoor['punch_time']);
+    //     $end   = Carbon::parse($lastOutFloor['punch_time']); 
+
+    //     if ($end->lessThanOrEqualTo($start)) {
+    //         return [
+    //             'punchIn'    => null,
+    //             'punchOut'   => null,
+    //             'totalHours' => 0,
+    //             'punches'    => $punches->toArray(),
+    //         ];
+    //     }
+
+    //     return [
+    //         'punchIn'    => $start,                 // 👈 IMPORTANT
+    //         'punchOut'   => $end,                   // 👈 IMPORTANT
+    //         'totalHours' => round($start->diffInSeconds($end) / 3600, 2),
+    //         'punches'    => $punches->toArray(),
+    //     ];
+    // }
+    // private function calculateFromPunchesJson(?string $punchesJson, string $date): array
+    // {
+    //     $punches = collect(json_decode($punchesJson ?? '[]', true))
+    //         ->filter(
+    //             fn($p) =>
+    //             isset($p['device'], $p['punch_time']) &&
+    //                 Carbon::parse($p['punch_time'])->toDateString() === $date
+    //         )
+    //         ->sortBy('punch_time')
+    //         ->values();
+
+    //     $firstMainDoor = $punches->where('device', 'MAIN_DOOR')->first();
+    //     $lastOutFloor  = $punches->where('device', 'OUT_FLOOR')->last();
+
+    //     // ALWAYS SHOW MAIN DOOR AS PUNCH IN
+    //     $punchIn  = $firstMainDoor
+    //         ? Carbon::parse($firstMainDoor['punch_time'])
+    //         : null;
+
+    //     $punchOut = $lastOutFloor
+    //         ? Carbon::parse($lastOutFloor['punch_time'])
+    //         : null;
+
+    //     // Calculate hours ONLY if both exist
+    //     $totalHours = 0;
+    //     if ($punchIn && $punchOut && $punchOut->greaterThan($punchIn)) {
+    //         // Interval nikalne ke liye
+    //         $interval = $punchIn->diff($punchOut);
+
+    //         // Total hours (days ko include karte hue taaki agar shift 24hr se zyada ho toh error na aaye)
+    //         $hours = $interval->h + ($interval->days * 24);
+    //         $minutes = $interval->i;
+
+    //         // Display format
+    //         $displayTime = $hours . " Hours, " . $minutes . " Mins";
+    //         $totalHours = round(
+    //             $punchIn->diffInSeconds($punchOut) / 3600,
+    //             2
+    //         );
+    //     }
+
+    //     return [
+    //         'punchIn'    => $punchIn,
+    //         'punchOut'   => $punchOut,
+    //         'totalHours' => $totalHours,
+    //         'punches'    => $punches->toArray(),
+    //     ];
+    // }
+
+    private function calculateFromPunchesJson(?string $punchesJson, string $date): array
+{
+    $punches = collect(json_decode($punchesJson ?? '[]', true))
+        ->filter(fn($p) =>
+            isset($p['device'], $p['punch_time']) &&
+            Carbon::parse($p['punch_time'])->toDateString() === $date
+        )
+        ->sortBy('punch_time')
+        ->values();
+
+    // Priority Punch In Logic
+    $firstMainDoor = $punches->where('device', 'MAIN_DOOR')->first();
+    $firstInFloor  = $punches->where('device', 'IN_FLOOR')->first();
+
+    // If MAIN_DOOR exists use it, else fallback to IN_FLOOR
+    $punchInData = $firstMainDoor ?? $firstInFloor;
+
+    $lastOutFloor = $punches->where('device', 'OUT_FLOOR')->last();
+
+    $punchIn  = $punchInData ? Carbon::parse($punchInData['punch_time']) : null;
+    $punchOut = $lastOutFloor ? Carbon::parse($lastOutFloor['punch_time']) : null;
+
+    // Calculate hours
+    $totalHours = 0;
+    $displayTime = null;
+
+    if ($punchIn && $punchOut && $punchOut->greaterThan($punchIn)) {
+        $interval = $punchIn->diff($punchOut);
+
+        $hours   = $interval->h + ($interval->days * 24);
+        $minutes = $interval->i;
+
+        $displayTime = "{$hours} Hours, {$minutes} Mins";
+
+        $totalHours = round($punchIn->diffInSeconds($punchOut) / 3600, 2);
     }
 
-    public function clockout($timestampId)
+    return [
+        'punchIn'      => $punchIn,
+        'punchOut'     => $punchOut,
+        'totalHours'   => $totalHours,
+        'displayTime'  => $displayTime,
+        'punches'       => $punches->toArray(),
+    ];
+}
+
+
+
+
+
+    /**
+     * =====================================
+     * LOAD TABLE + TODAY HOURS
+     * =====================================
+     */
+    public function loadAttendance(): void
     {
-        try {
-            $timestamp = AttendanceTimestamp::find(Crypt::decrypt($timestampId));
-            $timestamp->attendance->update([
-                'endDate' => now(),
-            ]);
-            $timestamp->update([
-                'endTime' => now(),
-            ]);
-            $this->dispatch('IsClockedIn');
-            $this->dispatch('refreshAttendance');
-            $this->dispatch('Notification', __('You have clockout successfully'));
-        } catch (\Exception $e) {
-            $this->dispatch('Notification', __('Something went wrong'));
-        }
-    }
+        $userId = auth()->id();
 
-    private function calculateFromPunchesJson(string $punchesJson, string $date)
-    {
-        $punches = collect(json_decode($punchesJson ?? '[]', true))
-            ->filter(
-                fn($p) =>
-                isset($p['device'], $p['punch_time']) &&
-                    Carbon::parse($p['punch_time'])->toDateString() === $date
-            )
-            ->sortBy('punch_time')
-            ->values();
+        $this->attendances = [];
+        $this->totalHours = 0;
 
-        $totalMinutes = 0;
-        $openIn = null;
-
-        $firstIn = null;
-        $lastOut = null;
-
-        foreach ($punches as $punch) {
-            $time = Carbon::parse($punch['punch_time']);
-
-            if ($punch['device'] === 'IN_FLOOR') {
-                if (!$firstIn) {
-                    $firstIn = $punch;
-                }
-                if ($openIn === null) {
-                    $openIn = $time;
-                }
-            }
-
-            if ($punch['device'] === 'OUT_FLOOR' && $openIn !== null) {
-                if ($time->greaterThan($openIn)) {
-                    $totalMinutes += $time->diffInMinutes($openIn);
-                    $lastOut = $punch;
-                }
-                $openIn = null;
-            }
-        }
-
-        return [
-            'firstIn'    => $firstIn,
-            'lastOut'    => $lastOut,
-            'totalHours' => round(max(0, $totalMinutes) / 60, 2),
-            'punches'    => $punches,
-        ];
-    }
-
-    #[On('refreshAttendance')]
-    public function getAttendance()
-    {
-        $userId = auth()->user()->id;
-        $this->getAttendances($userId);
-
-        // 🔥 SET TODAY HOURS FOR DASHBOARD CIRCLE
-        $today = Carbon::today()->toDateString();
-
-        $todayAttendance = Attendance::where('user_id', $userId)
-            ->whereDate('created_at', $today)
-            ->first();
-
-        if ($todayAttendance) {
-            $calc = $this->calculateFromPunchesJson(
-                $todayAttendance->punches,
-                $today
-            );
-
-            $this->totalHours = $calc['totalHours'];
-        } else {
-            $this->totalHours = 0;
-        }
-    }
-
-
-    public function getAttendances($userId)
-    {
         $records = Attendance::where('user_id', $userId)
-            ->orderBy('created_at', 'DESC')
+            ->orderBy('date', 'DESC')
             ->get();
 
-        $final = [];
-
         foreach ($records as $attendance) {
-
-            $date = $attendance->created_at->toDateString();
+            $date = $attendance->date;
 
             $calc = $this->calculateFromPunchesJson(
                 $attendance->punches,
                 $date
             );
 
-            $final[] = (object)[
+            $this->attendances[] = [
                 'date'       => $date,
-                'startTime'  => $calc['firstIn']
-                    ? Carbon::parse($calc['firstIn']['punch_time'])
-                    : null,
-                'endTime'    => $calc['lastOut']
-                    ? Carbon::parse($calc['lastOut']['punch_time'])
-                    : null,
+                'punchIn'    => $calc['punchIn'],
+                'punchOut'   => $calc['punchOut'],
                 'totalHours' => $calc['totalHours'],
             ];
-        }
-
-        $this->attendances = $final;
-    }
-
-
-    // public function getAttendances($userId = null)
-    // {
-    //     $this->todayActivity = Attendance::select('punches')->where('user_id', $userId)->whereDate('date', Carbon::today())->get();
-    //     // $this->attendances = Attendance::select('punches')->where('user_id', $userId)->get();  
-
-    //     $rawAttendances = Attendance::where('user_id', $userId)
-    //         ->orderBy('created_at', 'ASC')
-    //         ->get();
-
-    //     $finalAttendances = [];
-
-    //     foreach ($rawAttendances as $record) {
-
-    //         // Decode punches JSON
-    //         $punches = json_decode($record->punches, true);
-
-    //         if (!is_array($punches)) {
-    //             $punches = [];
-    //         }
-
-    //         // Convert punch_time into Carbon object
-    //         foreach ($punches as &$p) {
-    //             $p['dt'] = \Carbon\Carbon::parse($p['punch_time']);
-    //         }
-    //         unset($p);
-
-    //         // FIRST MAIN_DOOR = Punch In
-    //         $punchIn = collect($punches)
-    //             ->where('device', 'IN_FLOOR')
-    //             ->sortBy('dt')         // ascending
-    //             ->first();
-
-    //         // LAST OUT_FLOOR = Punch Out
-    //         $punchOut = collect($punches)
-    //             ->where('device', 'OUT_FLOOR')
-    //             ->sortByDesc('dt')     // descending
-    //             ->first();
-
-    //         // Prepare variables
-    //         $startTime = $punchIn['dt'] ?? null;
-    //         $endTime   = $punchOut['dt'] ?? null;
-
-    //         // Total hours calculation
-    //         $totalHours = null;
-    //         if ($startTime && $endTime) {
-    //             $totalHours = $endTime->diff($startTime)->format('%H:%I');
-    //         }
-
-    //         // Push final formatted data
-    //         $finalAttendances[] = (object)[
-    //             'date'       => $record->created_at->toDateString(),
-    //             'startTime'  => $startTime,
-    //             'endTime'    => $endTime,
-    //             'totalHours' => $totalHours,
-    //         ];
-    //     }
-    //     $this->attendances = $finalAttendances;
-    // }
-
-    // #[On('fetchStatistics')]
-    // public function statistics()
-    // {
-    //     $userId = auth()->user()->id;
-    //     $userAttendances = AttendanceTimestamp::where('user_id', $userId)
-    //                     ->whereNotNull('attendance_id');
-    //     $this->totalHoursToday = $userAttendances->whereDate('created_at', Carbon::today())
-    //                     ->get()
-    //                     ->sum('totalHours');
-    //     $this->totalHoursThisMonth = $userAttendances->whereMonth('created_at', Carbon::now())
-    //                     ->get()
-    //                     ->sum('totalHours');
-    //     $this->totalHoursThisWeek = $userAttendances
-    //                     ->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
-    //                     ->get()
-    //                     ->sum('totalHours');
-    // }
-
-    private function calculateTotalHours($timestamps)
-    {
-        $totalSeconds = 0;
-
-        foreach ($timestamps as $ts) {
-            $start = Carbon::parse($ts->startTime);
-            $end   = $ts->endTime ? Carbon::parse($ts->endTime) : now();
-
-            if ($end->greaterThan($start)) {
-                $totalSeconds += $end->diffInSeconds($start);
+            if ($date === now()->toDateString()) {
+                $this->totalHours = $calc['totalHours'];
             }
         }
-
-        // Convert to hours (decimal, e.g. 7.50)
-        return round($totalSeconds / 3600, 2);
-
-        // OR return HH:MM format instead:
-        // return gmdate('H:i', $totalSeconds);
     }
 
-
-    // #[On('fetchStatistics')]
-    // public function statistics()
-    // {
-    //     $userId = auth()->user()->id;
-
-    //     $this->totalHoursToday = $this->calculateTotalHours(
-    //         AttendanceTimestamp::where('user_id', $userId)
-    //             ->whereDate('startTime', Carbon::today())
-    //             ->get()
-    //     );
-
-    //     $this->totalHoursThisWeek = $this->calculateTotalHours(
-    //         AttendanceTimestamp::where('user_id', $userId)
-    //             ->whereBetween('startTime', [
-    //                 Carbon::now()->startOfWeek(),
-    //                 Carbon::now()->endOfWeek()
-    //             ])
-    //             ->get()
-    //     );
-
-    //     $this->totalHoursThisMonth = $this->calculateTotalHours(
-    //         AttendanceTimestamp::where('user_id', $userId)
-    //             ->whereMonth('startTime', Carbon::now()->month)
-    //             ->whereYear('startTime', Carbon::now()->year)
-    //             ->get()
-    //     );
-    // }
-
-    #[On('fetchStatistics')]
-    public function statistics()
+    /**
+     * =====================================
+     * STATISTICS
+     * =====================================
+     */
+    public function statistics(): void
     {
-        $userId = auth()->user()->id;
-
-        $records = Attendance::where('user_id', $userId)->get();
+        $userId = auth()->id();
 
         $this->totalHoursToday = 0;
         $this->totalHoursThisWeek = 0;
         $this->totalHoursThisMonth = 0;
 
-        foreach ($records as $attendance) {
+        $records = Attendance::where('user_id', $userId)->get();
 
-            $date = $attendance->created_at->toDateString();
+        foreach ($records as $attendance) {
+            $date = $attendance->date;
+
             $calc = $this->calculateFromPunchesJson(
                 $attendance->punches,
                 $date
             );
 
-            if ($date === Carbon::today()->toDateString()) {
+            if ($date === now()->toDateString()) {
                 $this->totalHoursToday += $calc['totalHours'];
             }
 
@@ -336,48 +235,121 @@ class EmployeeAttendance extends Component
                 $this->totalHoursThisMonth += $calc['totalHours'];
             }
         }
+
+        $this->totalHoursToday = round($this->totalHoursToday, 2);
+        $this->totalHoursThisWeek = round($this->totalHoursThisWeek, 2);
+        $this->totalHoursThisMonth = round($this->totalHoursThisMonth, 2);
+    }
+
+    public function manualClockIn(): void
+    {
+        if (!$this->isManualUser) {
+            return;
+        }
+
+        $userId = auth()->id();
+        $date   = now()->toDateString(); //ALWAYS STRING
+
+        //ALWAYS ensure date exists
+        $attendance = Attendance::firstOrCreate(
+            [
+                'user_id' => $userId,
+                'date'    => $date,
+            ],
+            [
+                'punches' => json_encode([]),
+            ]
+        );
+
+        $punches = json_decode($attendance->punches ?? '[]', true);
+
+        //PREVENT DOUBLE CLOCK-IN
+        $lastPunch = collect($punches)->last();
+        if ($lastPunch && $lastPunch['device'] === 'MAIN_DOOR') {
+            return;
+        }
+
+        //ADD MAIN_DOOR ENTRY
+        $punches[] = [
+            'device'     => 'MAIN_DOOR',
+            'punch_time' => now()->toDateTimeString(),
+        ];
+
+        $attendance->update([
+            'punches' => json_encode($punches),
+        ]);
+
+        $this->isClockedIn = true;
+
+        $this->mount(); // refresh state
     }
 
 
-    #[On('IsClockedIn')]
-    public function getClockInData()
+    public function manualClockOut(): void
     {
-        $todayClockin = Attendance::where('user_id', auth()->user()->id)
-            ->whereDate('created_at', Carbon::today())
+        if (!$this->isManualUser) return;
+
+        $userId = auth()->id();
+        $date = now()->toDateString();
+
+        $attendance = Attendance::where('user_id', $userId)
+            ->where('date', $date)
             ->first();
-        if (!empty($todayClockin)) {
-            $latestClockin = $todayClockin->timestamps()->latest()->whereNull('endTime')->first() ?? null;
-            if (!empty($latestClockin)) {
-                $this->clockedIn = true;
-                $this->timeId = Crypt::encrypt($latestClockin->id);
-                $this->timeStarted = $latestClockin->startTime;
-                $this->totalHours = Carbon::now()->diff($latestClockin->startTime)->h;
-            }
+
+        if (!$attendance) return;
+
+        $punches = json_decode($attendance->punches, true) ?? [];
+
+        $last = collect($punches)->last();
+        if (!$last || $last['device'] !== 'MAIN_DOOR') return;
+
+        $punches[] = [
+            'device' => 'OUT_FLOOR',
+            'punch_time' => now()->toDateTimeString(),
+        ];
+
+        $attendance->update([
+            'punches' => json_encode($punches),
+        ]);
+
+        $this->isClockedIn = false;
+
+        $this->mount(); // refresh data
+    }
+
+
+
+    /**
+     * =====================================
+     * INIT
+     * =====================================
+     */
+    public function mount(): void
+    {
+        $user = auth()->user();
+        $userId = $user->id;
+        $today = Attendance::where('user_id', $userId)
+            ->where('date', now()->toDateString())
+            ->first();
+        $this->isManualUser = strtolower($user->country) !== 'india';
+        $this->todayActivity = $today
+            ? collect(json_decode($today->punches ?? '[]', true))
+            ->sortBy('punch_time')
+            ->values()
+            ->toArray()
+            : [];
+
+        if ($this->isManualUser && $today) {
+            $lastPunch = collect($this->todayActivity)->last();
+            $this->isClockedIn = $lastPunch && $lastPunch['device'] === 'MAIN_DOOR';
         }
+
+        $this->loadAttendance();
+        $this->statistics();
     }
 
     public function render()
     {
         return view('livewire.employee-attendance');
-    }
-
-    public function mount()
-    {
-        // $userId = auth()->user()->id;
-        // $this->todayActivity = Attendance::select('punches')->where('user_id', $userId)->whereDate('date', Carbon::today())->get(); 
-        // $this->attendances = $finalAttendances;
-        // $this->todayActivity = Attendance::where('user_id', $userId)
-        //     ->whereDate('created_at', Carbon::today())
-        //     ->first();
-        // $userId = auth()->user()->id;
-        // $this->getAttendances($userId);
-
-        $userId = auth()->user()->id;
-
-        $this->todayActivity = Attendance::where('user_id', $userId)
-            ->whereDate('created_at', Carbon::today())
-            ->first();
-
-        $this->getAttendances($userId);
     }
 }
