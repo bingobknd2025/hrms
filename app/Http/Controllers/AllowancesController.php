@@ -17,7 +17,7 @@ class AllowancesController extends Controller
         $pageTitle = __('Allowances');
         $allowances = EmployeeAllowance::get();
         return view('pages.payroll.allowances.index',compact(
-            'pageTitle','allowances'
+            'pageTitle','allowances', 'employee'
         ));
     }
 

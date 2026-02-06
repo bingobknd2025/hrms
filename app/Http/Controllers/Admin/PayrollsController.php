@@ -32,8 +32,10 @@ class PayrollsController extends Controller
 
     public function items(){
         $pageTitle = __('Payroll Items');
-        $allowances = EmployeeAllowance::get();
-        $deductions = EmployeeDeduction::get();
+        // $allowances = EmployeeAllowance::get();
+        // $deductions = EmployeeDeduction::get();
+        $allowances = EmployeeAllowance::with('employeeDetail.user')->get();
+        $deductions = EmployeeDeduction::with('employeeDetail.user')->get();
         return view('pages.payroll.items',compact(
             'pageTitle','allowances','deductions'
         ));

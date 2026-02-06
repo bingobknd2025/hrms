@@ -17,4 +17,8 @@ class EmployeeDeduction extends Model
     {
         return $this->belongsTo(EmployeeDetail::class, 'employee_detail_id');
     }
+    public function employeeDetail()
+    {
+        return $this->belongsTo(EmployeeDetail::class, 'employee_detail_id');
+    }
 }

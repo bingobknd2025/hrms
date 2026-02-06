@@ -46,9 +46,9 @@
                           @if (!empty($employee->designation_id))
                           <small class="text-muted">{{ $employee->designation->name ?? '' }}</small>
                           @endif
-                          @if (!empty($employee->emp_id))
+                          <!-- @if (!empty($employee->emp_id))
                           <div class="staff-id">{{ __('Employee ID') }} : {{ $employee->emp_id ?? '' }}</div>
-                          @endif
+                          @endif -->
                           @if (!empty($employee->date_joined))
                           <div class="small doj text-muted">
                             {{ __('Date of Join') }} : {{ format_date($employee->date_joined) }}
@@ -453,7 +453,7 @@
                     <div class="col-sm-4">
                       <div class="input-block mb-3">
                         <label class="col-form-label"
-                          >{{ __('Salary amount') }}
+                          >{{ __('Basic Salary amount') }}
                         </label>
                         <div class="input-group">
                           <span class="input-group-text">{{ LocaleSettings('currency_symbol') }}</span>

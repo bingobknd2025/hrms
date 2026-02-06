@@ -56,6 +56,7 @@
                         <table class="table table-hover table-radius">
                             <thead>
                                 <tr>
+                                    <th>{{ __('Employee Name') }}</th>
                                     <th>{{ __('Name') }}</th>
                                     <th>{{ __('Amount') }}</th>
                                     <th class="text-end">{{ __('Action') }}</th>
@@ -65,6 +66,9 @@
                                 @if (!empty($allowances))
                                     @foreach ($allowances as $allowance)
                                     <tr>
+                                        <td>
+                                            {{ $allowance->employeeDetail?->user?->fullname ?? '-' }}
+                                        </td>
                                         <th>{{ $allowance->name }}</th>
                                         <td>{{ LocaleSettings('currency_symbol').' '. $allowance->amount }}</td>
                                         @include('pages.payroll.allowances.actions', ['id' => $allowance->id])
