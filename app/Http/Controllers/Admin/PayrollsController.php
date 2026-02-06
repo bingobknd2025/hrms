@@ -44,7 +44,15 @@ class PayrollsController extends Controller
      */
     public function create()
     {
-        $employees = User::where('is_active', true)->where('type', UserType::EMPLOYEE)->get();
+       $employees = User::with([
+            'employeeDetail'
+        ])
+        ->where('is_active', true)
+        ->where('type', UserType::EMPLOYEE)
+        ->whereHas('employeeDetail', function ($q) {
+            $q->whereHas('salaryDetails');
+        })
+        ->get();
         return view('pages.payroll.payslips.create',compact(
             'employees'
         ));
@@ -55,6 +63,7 @@ class PayrollsController extends Controller
      */
     public function store(Request $request)
     {
+
         $request->validate([
             'employee' => 'required',
             'type' => 'required',
@@ -64,17 +73,20 @@ class PayrollsController extends Controller
             'weeks' => 'required_if:type,weekly',
         ]);
 
-        $employee = EmployeeDetail::findOrFail($request->employee);
+
+        $employee = EmployeeDetail::find($request->employee);
         $salaryInfo = $employee->salaryDetails;
         $deductions = 0;
         $allowances = 0;
         $total_hours = 0;
         $allowancesItems = null;
         $deductionItems = null;
-        if(!empty($request->use_allowance)){
+
+        if(isset($request->use_allowance) && !empty($request->use_allowance)){
             $allowancesItems = EmployeeAllowance::where('employee_detail_id',$employee->id)->get();
             $allowances = $allowancesItems->sum('amount');
         }
+
         if(!empty($request->use_deductions)){
             $deductionItems = EmployeeDeduction::where('employee_detail_id',$employee->id)->get();
             $deductions = $deductionItems->sum('amount');
@@ -90,6 +102,8 @@ class PayrollsController extends Controller
             $weeks_salary = ($request->weeks * $salaryInfo->base_salary);
             $net_pay = ($weeks_salary + $allowances) - $deductions;
         }
+
+       
         $payslip = Payslip::create([
             'ps_id' => pad_zeros(Payslip::count()+1),
             'title' => $request->title,

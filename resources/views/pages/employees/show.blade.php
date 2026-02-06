@@ -432,7 +432,7 @@
             <div class="card">
               <div class="card-body">
                 <h3 class="card-title">{{ __('Basic Salary Information') }}</h3>
-                <form action="{{ route('employee.salary-setting', $user->id) }}" method="post">
+                <form action="{{ route('employee.salary-setting', $employee->id) }}" method="post">
                   @csrf
                   <div class="row">
                     <input type="hidden" name="salary_detail_id" value="{{ !empty($employee->salaryDetails) ? $employee->salaryDetails->id : '' }}">

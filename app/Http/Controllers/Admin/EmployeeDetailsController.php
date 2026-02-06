@@ -107,6 +107,7 @@ class EmployeeDetailsController extends BaseController
 
     public function salarySetting(Request $request, EmployeeDetail $employeeDetail)
     {
+
         $request->validate([
             'base_salary' => 'required|numeric',
             'pf_number' => 'nullable|required_if:pf_contribution,1|numeric',
