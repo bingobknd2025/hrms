@@ -2,6 +2,93 @@
 
 
 @section('page-content')
+
+    <style>
+        body {
+            background: #f5f5f5;
+        }
+
+        .annexure-page {
+            background: #ffffff;
+            min-height: 1120px;
+            padding: 50px 60px 140px 60px;
+            position: relative;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        /* HEADER */
+        .annexure-header img.logo {
+            height: 55px;
+        }
+
+        .annexure-header img.pattern {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 300px;
+        }
+
+        /* TITLE */
+        .annexure-title {
+            margin-top: 40px;
+            margin-bottom: 25px;
+        }
+
+        .annexure-title h4 {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        /* EMPLOYEE INFO */
+        .emp-info p {
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        /* TABLE */
+        .salary-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #ffffff;
+            color: #000000;
+            margin-top: 25px;
+            font-size: 14px;
+        }
+
+        .salary-table th,
+        .salary-table td {
+            border: 1px solid #000000;
+            padding: 8px 10px;
+        }
+
+        .salary-table th,
+        .salary-table td {
+            border: 1px solid #000;
+            padding: 8px 10px;
+        }
+
+        .salary-table .fw-bold {
+            font-weight: bold;
+        }
+
+
+        /* FOOTER */
+        .annexure-footer {
+            position: absolute;
+            bottom: 25px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
+            color: #000;
+        }
+
+        .annexure-footer span {
+            display: block;
+            margin-top: 4px;
+        }
+    </style>
+
     <div class="content container-fluid">
 
         <!-- Page Header -->
@@ -63,120 +150,185 @@
         </x-breadcrumb>
         <!-- /Page Header -->
 
-        <div class="row" id="payslipSection">
-            <div class="col-md-12">
-                <div class="card">
-                    @if (!empty($payslip->title))
-                    <h4 class="payslip-title">{{ $payslip->title }}</h4>
-                    @endif
-                    <div class="card-body">
-                        <div class="row">
-                            @php
-                                $company = app(\App\Settings\CompanySettings::class);
-                            @endphp
-                            <div class="col-sm-6 m-b-20">
-                                <img src="{{ appLogo() }}" class="inv-logo" alt="Logo">
-                                 <ul class="list-unstyled">
-                                    <li>{{ $company->name }}</li>
-                                    <li>{{ $company->address }}</li>
-                                    <li>{{ !empty($company->city) ? $company->city.' , ':'' }}{{ !empty($company->province) ? $company->province.' ,' :''.$company->postal_code}}</li>
-                                </ul>
-                            </div>
-                            <div class="col-sm-6 m-b-20">
-                                <div class="invoice-details">
-                                    <h3 class="text-uppercase">{{ __('Payslip') }} {{ $payslip->ps_id }}</h3>
-                                    <ul class="list-unstyled">
-                                        <li>{{ __('Date Created') }}: <span>{{ format_date($payslip->created_at) }}</span></li>
-                                        @if ($payslip->type === \App\Enums\Payroll\SalaryType::Hourly)
-                                        <li>{{ __('Start Date') }}: <span>{{ format_date($payslip->startDate) }}</span></li>
-                                        <li>{{ __('Expiry date') }}: <span>{{ format_date($payslip->expiryDate) }}</span></li>
-                                        @endif
-                                        @if(!empty($payslip->payslip_date))
-                                        <li>{{ __('Salary Month') }}: <span>{{ $payslip->payslip_date }}</span></li>
-                                        @endif
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-sm-12 col-lg-12 m-b-20">
-                                <ul class="list-unstyled">
-                                    <li><h5 class="mb-0"><strong>{{ $payslip->employee->user->fullname }}</strong></h5></li>
-                                    <li>{{ $employee->user->address }}</li>
-                                    <li><span>{{ $employee->department->name ?? '' }}</span></li>
-                                    <li><span>{{ $employee->designation->name ?? '' }}</span></li>
-                                    <li>{{ __('Employee ID') }}: {{ $employee->emp_id }}</li>
-                                    <li>{{ __('Joining Date') }}: {{ $employee->date_joined }}</li>
-                                    <li>{{ $employee->phoneNumber }}</li>
-                                    <li><a href="@can('show-Employeeprofile') {{ route('employees.show',['employee' => \Crypt::encrypt($employee->user->id)]) }} @else # @endcan">{{ $employee->user->email }}</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="row">
-                            @if (!empty($payslip->use_allowance))
-                            <div class="col-sm-6">
-                                <div>
-                                    <h4 class="m-b-10"><strong>{{ __('Allowances') }}</strong></h4>
-                                    <table class="table table-bordered">
-                                        <tbody>
-                                            @if (!empty($employee->salaryDetails))
-                                            <tr>
-                                                <td><strong>{{ __('Base pay') }}</strong> <span class="float-end">{{ $currency }} {{ $employee->salaryDetails->base_salary }}</span></td>
-                                            </tr>
-                                            @endif
-                                            @if (!empty($allowances))
-                                                @foreach ($allowances as $allowance)
-                                                <tr>
-                                                    <td><strong>{{ $allowance->name }}</strong> <span class="float-end">{{ $currency.' '.$allowance->amount }}</span></td>
-                                                </tr>
-                                                @endforeach
-                                            @endif
-                                            <tr>
-                                                <td><strong>{{ __('Total Allowance') }}</strong> <span class="float-end"><strong>{{ $allowances->sum('amount') ?? 0 }}</strong></span></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                            @endif
-                            @if (!empty($payslip->use_deduction))
-                            <div class="col-sm-6">
-                                <div>
-                                    <h4 class="m-b-10"><strong>{{ __('Deductions') }}</strong></h4>
-                                    <table class="table table-bordered">
-                                        <tbody>
-                                            @if (!empty($deductions))
-                                                @foreach ($deductions as $item)
-                                                <tr>
-                                                    <td><strong>{{ $item->name }}</strong> <span class="float-end">{{ $currency.' '.$item->amount }}</span></td>
-                                                </tr>
-                                                @endforeach
-                                            @endif
-                                            <tr>
-                                                <td><strong>{{ __('Total Deductions') }}</strong> <span class="float-end"><strong>{{ $currency.' '. $deductions->sum('amount') ?? 0 }}</strong></span></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                            @endif
-                            <div class="col-sm-12">
-                                <p><strong>{{ __('Net Pay') }}: {{ $currency .' '.$payslip->net_pay}}</strong> ({{ ucwords(\Number::spell($payslip->net_pay)) }}.)</p>
-                                @if ($payslip->type === \App\Enums\Payroll\SalaryType::Hourly)
-                                <p><small class="text-info"><strong>{{ __('Net Pay') }} = </strong>{{ __('Total hours for attendance between start and end date multiply by Base Salary') }} + {{ __('Total Allowances') }} - {{ __('Total Deductions') }}</small></p>
-                                @endif
-                                @if ($payslip->type === \App\Enums\Payroll\SalaryType::Weekly)
-                                <p><small class="text-info"><strong>{{ __('Net Pay') }} = </strong>{{ __('Number of weeks multiply by Base Salary') }} + {{ __('Total Allowances') }} - {{ __('Total Deductions') }}</small></p>
-                                @endif
-                                @if ($payslip->type === \App\Enums\Payroll\SalaryType::Monthly || $payslip->type === \App\Enums\Payroll\SalaryType::Contract)
-                                <p><small class="text-info"><strong>{{ __('Net Pay') }} = </strong>{{ __('Base Salary') }} + {{ __('Total Allowances') }} - {{ __('Total Deductions') }}</small></p>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                </div>
+     
+
+        <div class="annexure-page" id="payslipSection">
+
+            {{-- HEADER --}}
+            <div class="annexure-header">
+                <img src="{{ asset('images/bingo.png') }}" class="logo" alt="Logo">
+                <img src="{{ asset('images/latterhead.png') }}" class="pattern" alt="">
             </div>
+
+            {{-- TITLE --}}
+            <div class="annexure-title">
+                <strong>Payslip of the month of {{ $payslip->payslip_date ?? format_date($payslip->created_at) }}</strong>
+            </div>
+
+            {{-- EMPLOYEE INFO --}}
+            <div class="emp-info">
+                <p>Employee Name: {{ $payslip->employee->user->fullname }}</p>
+                <p>Designation: {{ $employee->designation->name ?? 'XX' }}</p>
+                <p>Location: {{ $employee->location ?? 'Noida' }}</p>
+                <p>Date of Joining: {{ format_date($employee->date_joined) }}</p>
+                <p>Salary Month: {{ $payslip->payslip_date ?? format_date($payslip->created_at) }}</p>
+            </div>
+
+            {{-- SALARY TABLE --}}
+            <table class="salary-table">
+                <thead>
+                    <tr>
+                        <th width="40%">SECTION</th>
+                        <th width="30%">AMOUNT</th>
+                        <th width="30%">DETAILS</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    @php
+                        // Calculate totals
+                        $baseSalary = $employee->salaryDetails->base_salary ?? 0;
+                        $totalAllowances = $allowances->sum('amount') ?? 0;
+                        $totalDeductions = $deductions->sum('amount') ?? 0;
+                        $grossSalary = $baseSalary + $totalAllowances;
+                        $hraAllowance = $allowances->where('name', 'HRA')->first()->amount ?? 0;
+                        $otherAllowances = $totalAllowances - $hraAllowance;
+                        
+                        // Employer contributions (you may need to adjust these based on your data structure)
+                        $employerPF = 0;
+                        $employerESI = 0;
+                        foreach($deductions as $deduction) {
+                            if(stripos($deduction->name, 'employer') !== false || stripos($deduction->name, 'pf') !== false) {
+                                $employerPF += $deduction->amount ?? 0;
+                            }
+                            if(stripos($deduction->name, 'employer') !== false || stripos($deduction->name, 'esi') !== false) {
+                                $employerESI += $deduction->amount ?? 0;
+                            }
+                        }
+                        
+                        $totalEmployerContribution = $employerPF + $employerESI;
+                        $ctc = $grossSalary + $totalEmployerContribution;
+                    @endphp   
+
+                    {{-- Monthly Salary Structure (Earnings) --}}
+                    
+                    <tr>
+                        <td>Basic Salary</td>
+                        <td>{{ $currency }} {{ number_format($baseSalary, 2) }}</td>
+                        <td>50% of Gross</td>
+                    </tr>
+                    @if($hraAllowance > 0)
+                    <tr>
+                        <td>HRA</td>
+                        <td>{{ $currency }} {{ number_format($hraAllowance, 2) }}</td>
+                        <td>40% of Basic</td>
+                    </tr>
+                    @endif
+                    @if($otherAllowances > 0)
+                    <tr>
+                        <td>Other Allowances</td>
+                        <td>{{ $currency }} {{ number_format($otherAllowances, 2) }}</td>
+                        <td>Remaining part of Gross</td>
+                    </tr>
+                    @endif
+                    <tr class="fw-bold total-row">
+                        <td>Total Gross Salary</td>
+                        <td>{{ $currency }} {{ number_format($grossSalary, 2) }}</td>
+                        <td></td>
+                    </tr>
+
+                    {{-- Statutory Deductions --}}
+                    <tr class="section-row">
+                        <td colspan="3">Statutory Deductions</td>
+                    </tr>
+                    @php $hasDeductions = false; @endphp
+                    @foreach($deductions as $deduction)
+                        @if(stripos($deduction->name, 'employee') !== false || stripos($deduction->name, 'pf') !== false || stripos($deduction->name, 'esi') !== false)
+                            @php $hasDeductions = true; @endphp
+                            <tr>
+                                <td>{{ $deduction->name }}</td>
+                                <td>{{ $currency }} {{ number_format($deduction->amount, 2) }}</td>
+                                <td></td>
+                            </tr>
+                        @endif
+                    @endforeach
+                    @if(!$hasDeductions)
+                    <tr>
+                        <td>Employee PF</td>
+                        <td>{{ $currency }} 0.00</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Employee ESI</td>
+                        <td>{{ $currency }} 0.00</td>
+                        <td></td>
+                    </tr>
+                    @endif
+                    <tr class="fw-bold total-row">
+                        <td>Total Deductions</td>
+                        <td>{{ $currency }} {{ number_format($totalDeductions, 2) }}</td>
+                        <td></td>
+                    </tr>
+
+                    {{-- Net Salary (In-Hand) --}}
+                    <tr class="section-row">
+                        <td colspan="3">Net Salary (In-Hand)</td>
+                    </tr>
+                    <tr class="fw-bold net-pay-row">
+                        <td>Net Pay</td>
+                        <td>{{ $currency }} {{ number_format($payslip->net_pay, 2) }}</td>
+                        <td></td>
+                    </tr>
+
+                    {{-- Employer Contributions (CTC) --}}
+                    <tr class="section-row">
+                        <td colspan="3">Employer Contributions (CTC)</td>
+                    </tr>
+                    @if($employerPF > 0)
+                    <tr>
+                        <td>Employer PF</td>
+                        <td>{{ $currency }} {{ number_format($employerPF, 2) }}</td>
+                        <td></td>
+                    </tr>
+                    @else
+                    <tr>
+                        <td>Employer PF</td>
+                        <td>{{ $currency }} 0.00</td>
+                        <td></td>
+                    </tr>
+                    @endif
+                    @if($employerESI > 0)
+                    <tr>
+                        <td>Employer ESI</td>
+                        <td>{{ $currency }} {{ number_format($employerESI, 2) }}</td>
+                        <td></td>
+                    </tr>
+                    @else
+                    <tr>
+                        <td>Employer ESI</td>
+                        <td>{{ $currency }} 0.00</td>
+                        <td></td>
+                    </tr>
+                    @endif
+                    <tr class="fw-bold total-row">
+                        <td>Total Employer Contribution</td>
+                        <td>{{ $currency }} {{ number_format($totalEmployerContribution, 2) }}</td>
+                        <td></td>
+                    </tr>
+
+                    {{-- CTC Per Annum --}}
+                    <tr class="fw-bold ctc-row">
+                        <td>CTC Per Annum</td>
+                        <td>{{ $currency }} {{ number_format($ctc * 12, 2) }}</td>
+                        <td></td>
+                    </tr>
+
+                </tbody>
+            </table>
+
+
         </div>
+
     </div>
 @endsection
 
