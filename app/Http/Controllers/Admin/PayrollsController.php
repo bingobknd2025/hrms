@@ -148,6 +148,7 @@ class PayrollsController extends Controller
     public function show(string $id)
     {
         $payslip = Payslip::findOrFail(Crypt::decrypt($id));
+        // dd($payslip);
         $pageTitle = $payslip->ps_id ?? __('Payslip');
         $currency = LocaleSettings('currency_symbol');
         $employee = $payslip->employee;

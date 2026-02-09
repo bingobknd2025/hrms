@@ -1,11 +1,15 @@
 @extends('layouts.app')
 
-
 @section('page-content')
 
     <style>
+        /* Base styles */
         body {
             background: #f5f5f5;
+        }
+
+        .content.container-fluid {
+            background: transparent;
         }
 
         .annexure-page {
@@ -14,6 +18,8 @@
             padding: 50px 60px 140px 60px;
             position: relative;
             font-family: Arial, Helvetica, sans-serif;
+            margin: 0 auto;
+            max-width: 800px;
         }
 
         /* HEADER */
@@ -52,25 +58,35 @@
             background: #ffffff;
             color: #000000;
             margin-top: 25px;
-            font-size: 14px;
+            font-size: 12px;
         }
 
         .salary-table th,
         .salary-table td {
             border: 1px solid #000000;
-            padding: 8px 10px;
-        }
-
-        .salary-table th,
-        .salary-table td {
-            border: 1px solid #000;
-            padding: 8px 10px;
+            padding: 3px 4px;
         }
 
         .salary-table .fw-bold {
-            font-weight: bold;
+            font-weight: bold !important;
         }
 
+        .section-row {
+            background-color: #fff !important;
+            font-weight: bold !important;
+        }
+
+        .total-row {
+            background-color: #fff !important;
+        }
+
+        .net-pay-row {
+            background-color: #fff !important;
+        }
+
+        .ctc-row {
+            background-color: #fff !important;
+        }
 
         /* FOOTER */
         .annexure-footer {
@@ -87,9 +103,81 @@
             display: block;
             margin-top: 4px;
         }
+
+        /* Print-specific styles */
+        @media print {
+            body * {
+                visibility: hidden;
+                background: transparent !important;
+            }
+            
+            .annexure-page, .annexure-page * {
+                visibility: visible;
+                background: white !important;
+                color: black !important;
+            }
+            
+            .annexure-page {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 50px 60px 140px 60px;
+                margin: 0;
+                box-shadow: none;
+                page-break-after: always;
+            }
+            
+            .salary-table {
+                border: 1px solid #000 !important;
+            }
+            
+            .salary-table th,
+            .salary-table td {
+                border: 1px solid #000 !important;
+                background: white !important;
+                color: black !important;
+            }
+            
+            /* Hide buttons and other elements that shouldn't print */
+            .breadcrumb,
+            .float-end,
+            .btn-group,
+            .page-header,
+            .breadcrumb-nav,
+            .float-end.ms-auto {
+                display: none !important;
+            }
+            
+            /* Ensure proper page breaks */
+            .salary-table {
+                page-break-inside: avoid;
+            }
+            
+            .annexure-footer {
+                position: fixed;
+                bottom: 25px;
+            }
+        }
+
+        /* Hide print elements on screen */
+        .print-only {
+            display: none;
+        }
+
+        @media print {
+            .print-only {
+                display: block;
+            }
+            
+            .no-print {
+                display: none !important;
+            }
+        }
+        
     </style>
 
-    <div class="content container-fluid">
+    <div class="content container-fluid no-print">
 
         <!-- Page Header -->
         <x-breadcrumb class="col">
@@ -104,53 +192,15 @@
             </ul>
             <x-slot name="right">
                 <div class="col-auto float-end ms-auto">
-                    <div class="btn-group btn-group-sm" x-data="{
-                        printContent: function(){
-                            const originalContents = $('body').html();
-                            var printContents = $('#payslipSection').html()
-                            $('body').empty().html(printContents);
-                            window.print();
-                            $('body').html(originalContents);
-                    }}">
+                    <div class="btn-group btn-group-sm">
                         <button class="btn btn-white" onclick='window.location.href="{{ route('payslips.index') }}"'>{{ __('Go Back') }}</button>
-                        <button class="btn btn-white" @click="function(){
-                            let pWidth = 595.28; // the width of a4
-                            let srcWidth = document.querySelector('body > div').scrollWidth;
-                            let margin = 18; // narrow margin - 1.27 cm (36);
-                            let scale = (pWidth - margin * 2) / srcWidth;
-                            const doc = new  jsPDF('p', 'pt', 'a4', true);
-                            doc.html(document.getElementById('payslipSection'),{
-                                callback: function (doc) {
-                                    let totalPages = doc.internal.getNumberOfPages()
-                                    {{-- //temporal solution for the blanks pages generated by jspdf --}}
-                                    for (var i = 2; i <= totalPages; i++) {
-                                        doc.setPage(i);
-                                        doc.deletePage(i);
-                                        i--;
-                                        totalPages--;
-                                    }
-                                    doc.save('{{ $payslip->ps_id }}.pdf');
-                                },
-                                html2canvas: {
-                                    useCORS: true,
-                                    allowTaint: true,
-                                    letterRendering: true,
-                                    scale: scale,
-                                },
-                                x: margin,
-                                y: margin,
-                                autoPaging: 'text',
-                                jsPDF: doc,
-                            })
-                        }">{{ __('PDF') }}</button>
-                        <button class="btn btn-white" @click="printContent"><i class="fa-solid fa-print fa-lg"></i> {{ __('Print') }}</button>
+                        <button class="btn btn-white" onclick="generatePDF()">{{ __('PDF') }}</button>
+                        <!-- <button class="btn btn-white" onclick="printPayslip()"><i class="fa-solid fa-print fa-lg"></i> {{ __('Print') }}</button> -->
                     </div>
                 </div>
             </x-slot>
         </x-breadcrumb>
         <!-- /Page Header -->
-
-     
 
         <div class="annexure-page" id="payslipSection">
 
@@ -171,7 +221,7 @@
                 <p>Designation: {{ $employee->designation->name ?? 'XX' }}</p>
                 <p>Location: {{ $employee->location ?? 'Noida' }}</p>
                 <p>Date of Joining: {{ format_date($employee->date_joined) }}</p>
-                <p>Salary Month: {{ $payslip->payslip_date ?? format_date($payslip->created_at) }}</p>
+                <!-- <p>Salary Month: {{ $payslip->payslip_date ?? format_date($payslip->created_at) }}</p> -->
             </div>
 
             {{-- SALARY TABLE --}}
@@ -194,7 +244,7 @@
                         $hraAllowance = $allowances->where('name', 'HRA')->first()->amount ?? 0;
                         $otherAllowances = $totalAllowances - $hraAllowance;
                         
-                        // Employer contributions (you may need to adjust these based on your data structure)
+                        // Employer contributions
                         $employerPF = 0;
                         $employerESI = 0;
                         foreach($deductions as $deduction) {
@@ -211,26 +261,25 @@
                     @endphp   
 
                     {{-- Monthly Salary Structure (Earnings) --}}
-                    
+                    @if($baseSalary > 0)
                     <tr>
                         <td>Basic Salary</td>
                         <td>{{ $currency }} {{ number_format($baseSalary, 2) }}</td>
-                        <td>50% of Gross</td>
-                    </tr>
-                    @if($hraAllowance > 0)
-                    <tr>
-                        <td>HRA</td>
-                        <td>{{ $currency }} {{ number_format($hraAllowance, 2) }}</td>
-                        <td>40% of Basic</td>
+                        <td>50% of Gross Salary</td>
                     </tr>
                     @endif
-                    @if($otherAllowances > 0)
+                    
+                    @foreach($allowances as $allowance)
                     <tr>
-                        <td>Other Allowances</td>
-                        <td>{{ $currency }} {{ number_format($otherAllowances, 2) }}</td>
-                        <td>Remaining part of Gross</td>
+                        <td>{{ $allowance->name }}</td>
+                        <td>{{ $currency }} {{ number_format($allowance->amount, 2) }}</td>
+                        @if(strtolower($allowance->name) == 'hra')
+                        <td>{{ number_format(($hraAllowance / $grossSalary) * 100) }}% of basic Salary</td>
+                        @else
+                        <td></td>
+                        @endif
                     </tr>
-                    @endif
+                    @endforeach
                     <tr class="fw-bold total-row">
                         <td>Total Gross Salary</td>
                         <td>{{ $currency }} {{ number_format($grossSalary, 2) }}</td>
@@ -326,12 +375,96 @@
                 </tbody>
             </table>
 
+            {{-- Print footer --}}
+            <div class="annexure-footer print-only">
+                <span>This is a system generated payslip. No signature required.</span>
+                <span>Generated on: {{ date('d-m-Y H:i:s') }}</span>
+            </div>
 
         </div>
 
     </div>
 @endsection
 
-
 @push('page-scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+    function printPayslip() {
+        // Store original content
+        const originalContent = document.body.innerHTML;
+        const printContent = document.getElementById('payslipSection').innerHTML;
+        
+        // Set body to print content only
+        document.body.innerHTML = printContent;
+        
+        // Trigger print
+        window.print();
+        
+        // Restore original content
+        document.body.innerHTML = originalContent;
+        
+        // Refresh the page to restore event listeners
+        window.location.reload();
+    }
+
+    function generatePDF() {
+        const element = document.getElementById('payslipSection');
+        
+        // Temporarily add print styles
+        const printStyles = document.createElement('style');
+        printStyles.innerHTML = `
+            @media print {
+                body * { visibility: hidden; }
+                #payslipSection, #payslipSection * { visibility: visible; }
+                #payslipSection { position: absolute; left: 0; top: 0; }
+            }
+        `;
+        document.head.appendChild(printStyles);
+
+        html2canvas(element, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            logging: false,
+            onclone: function(clonedDoc) {
+                clonedDoc.getElementById('payslipSection').style.padding = '50px 60px 140px 60px';
+                clonedDoc.getElementById('payslipSection').style.backgroundColor = '#ffffff';
+            }
+        }).then(canvas => {
+            // Remove temporary styles
+            document.head.removeChild(printStyles);
+            
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jspdf.jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+            
+            const imgWidth = 210; // A4 width in mm
+            const pageHeight = 297; // A4 height in mm
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            
+            let heightLeft = imgHeight;
+            let position = 0;
+            
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+            
+            while (heightLeft >= 0) {
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+            
+            pdf.save('{{ $payslip->ps_id }}.pdf');
+        }).catch(error => {
+            console.error('Error generating PDF:', error);
+            alert('Error generating PDF. Please try again.');
+            document.head.removeChild(printStyles);
+        });
+    }
+</script>
 @endpush
