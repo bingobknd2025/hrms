@@ -48,7 +48,7 @@
             position: absolute;
             top: 0;
             right: 0;
-            width: 200px;
+            width: 350px;
             z-index: 0;
         }
 
@@ -286,7 +286,7 @@
                 <div class="company-details">
                     <div class="company-name">Bingo Manufacturing & Marketing Pvt. Ltd.</div>
                     <div>H 102, Sector 63, Gautam Buddha Nagar, Noida 201301</div>
-                    <div style=""> Salary slip for the month of {{ $payslip->payslip_date ?? \Carbon\Carbon::parse($payslip->created_at)->format('F/Y') }}</div>
+                    <div style="font-weight: bold;"> Salary slip for the month of {{ $payslip->payslip_date ?? \Carbon\Carbon::parse($payslip->created_at)->format('F/Y') }}</div>
                 </div>
                 <img src="{{ asset('images/latterhead.png') }}" class="pattern" alt="">
             </div>
@@ -301,10 +301,10 @@
                     <span class="emp-info-label">Designation :</span>
                     <span class="emp-info-value">{{ $employee->designation->name ?? 'XX' }}</span>
                 </div>
-                <div class="emp-info-row">
+                <!-- <div class="emp-info-row">
                     <span class="emp-info-label">Emp ID :</span>
                     <span class="emp-info-value">{{ $employee->emp_code ?? $employee->id ?? '45' }}</span>
-                </div>
+                </div> -->
                 <div class="emp-info-row">
                     <span class="emp-info-label">Date of Joining :</span>
                     <span class="emp-info-value">{{ \Carbon\Carbon::parse($employee->date_joined)->format('jS F Y') }}</span>
