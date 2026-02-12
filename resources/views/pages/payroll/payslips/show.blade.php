@@ -23,32 +23,73 @@
         }
 
         /* HEADER */
+        .annexure-header {
+            margin-bottom: 30px;
+        }
+
         .annexure-header img.logo {
-            height: 55px;
+            height: 85px;
+        }
+
+        .annexure-header .company-details {
+            float: center;
+            text-align: center;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .annexure-header .company-name {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 3px;
         }
 
         .annexure-header img.pattern {
             position: absolute;
             top: 0;
             right: 0;
-            width: 300px;
+            width: 200px;
+            z-index: 0;
         }
 
         /* TITLE */
         .annexure-title {
-            margin-top: 40px;
+            margin-top: 30px;
             margin-bottom: 25px;
+            text-align: center;
         }
 
         .annexure-title h4 {
             font-weight: bold;
             margin-bottom: 5px;
+            font-size: 16px;
+        }
+
+        .salary-month {
+            font-size: 14px;
+            margin-top: 5px;
         }
 
         /* EMPLOYEE INFO */
-        .emp-info p {
-            margin-bottom: 4px;
+        .emp-info {
+            margin-bottom: 15px;
+            padding: 8px;
+            font-size: 13px;
+        }
+
+        .emp-info-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 5px;
+        }
+
+        .emp-info-label {
             font-weight: 600;
+            width: 140px;
+        }
+
+        .emp-info-value {
+            font-weight: normal;
         }
 
         /* TABLE */
@@ -57,35 +98,54 @@
             border-collapse: collapse;
             background: #ffffff;
             color: #000000;
-            margin-top: 25px;
+            margin-top: 15px;
             font-size: 12px;
+            table-layout: fixed;
         }
 
-        .salary-table th,
+        .salary-table th {
+            border: 1px solid #000000;
+            padding: 8px 6px;
+            background-color: #f0f0f0 !important;
+            font-weight: bold;
+            text-align: center;
+        }
+
         .salary-table td {
             border: 1px solid #000000;
-            padding: 3px 4px;
+            padding: 4px;
+            vertical-align: top;
         }
 
         .salary-table .fw-bold {
             font-weight: bold !important;
         }
 
-        .section-row {
-            background-color: #fff !important;
-            font-weight: bold !important;
+        .salary-table .section-header {
+            background-color: #e6e6e6 !important;
+            font-weight: bold;
+            text-align: left;
         }
 
-        .total-row {
-            background-color: #fff !important;
+        .salary-table .total-row {
+            background-color: #f9f9f9 !important;
+            font-weight: bold;
         }
 
-        .net-pay-row {
-            background-color: #fff !important;
+        .salary-table .net-pay-row {
+            background-color: #f0f0f0 !important;
+            font-weight: bold;
+            font-size: 13px;
         }
 
-        .ctc-row {
-            background-color: #fff !important;
+        .salary-table .amount-col, 
+        .salary-table .amount-right {
+            text-align: right;
+        }
+
+        .salary-table .text-muted {
+            color: #666;
+            font-style: italic;
         }
 
         /* FOOTER */
@@ -95,13 +155,20 @@
             left: 0;
             width: 100%;
             text-align: center;
-            font-size: 12px;
+            font-size: 11px;
             color: #000;
+            padding: 0 60px;
         }
 
         .annexure-footer span {
             display: block;
             margin-top: 4px;
+        }
+
+        .system-generated {
+            margin-top: 20px;
+            font-style: bold;
+            padding-top: 10px;
         }
 
         /* Print-specific styles */
@@ -139,17 +206,28 @@
                 color: black !important;
             }
             
-            /* Hide buttons and other elements that shouldn't print */
+            .salary-table th {
+                background-color: #f0f0f0 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .salary-table .section-header {
+                background-color: #e6e6e6 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
             .breadcrumb,
             .float-end,
             .btn-group,
             .page-header,
             .breadcrumb-nav,
-            .float-end.ms-auto {
+            .float-end.ms-auto,
+            .no-print {
                 display: none !important;
             }
             
-            /* Ensure proper page breaks */
             .salary-table {
                 page-break-inside: avoid;
             }
@@ -160,7 +238,6 @@
             }
         }
 
-        /* Hide print elements on screen */
         .print-only {
             display: none;
         }
@@ -195,7 +272,6 @@
                     <div class="btn-group btn-group-sm">
                         <button class="btn btn-white" onclick='window.location.href="{{ route('payslips.index') }}"'>{{ __('Go Back') }}</button>
                         <button class="btn btn-white" onclick="generatePDF()">{{ __('PDF') }}</button>
-                        <!-- <button class="btn btn-white" onclick="printPayslip()"><i class="fa-solid fa-print fa-lg"></i> {{ __('Print') }}</button> -->
                     </div>
                 </div>
             </x-slot>
@@ -205,184 +281,351 @@
         <div class="annexure-page" id="payslipSection">
 
             {{-- HEADER --}}
-            <div class="annexure-header">
-                <img src="{{ asset('images/bingo.png') }}" class="logo" alt="Logo">
+            <div class="annexure-header clearfix">
+                <img src="{{ asset('images/bingo.png') }}" class="logo" alt="Bingo Manufacturing & Marketing Pvt. Ltd.">
+                <div class="company-details">
+                    <div class="company-name">Bingo Manufacturing & Marketing Pvt. Ltd.</div>
+                    <div>H 102, Sector 63, Gautam Buddha Nagar, Noida 201301</div>
+                    <div style=""> Salary slip for the month of {{ $payslip->payslip_date ?? \Carbon\Carbon::parse($payslip->created_at)->format('F/Y') }}</div>
+                </div>
                 <img src="{{ asset('images/latterhead.png') }}" class="pattern" alt="">
-            </div>
-
-            {{-- TITLE --}}
-            <div class="annexure-title">
-                <strong>Payslip of the month of {{ $payslip->payslip_date ?? format_date($payslip->created_at) }}</strong>
             </div>
 
             {{-- EMPLOYEE INFO --}}
             <div class="emp-info">
-                <p>Employee Name: {{ $payslip->employee->user->fullname }}</p>
-                <p>Designation: {{ $employee->designation->name ?? 'XX' }}</p>
-                <p>Location: {{ $employee->location ?? 'Noida' }}</p>
-                <p>Date of Joining: {{ format_date($employee->date_joined) }}</p>
-                <!-- <p>Salary Month: {{ $payslip->payslip_date ?? format_date($payslip->created_at) }}</p> -->
+                <div class="emp-info-row">
+                    <span class="emp-info-label">Employee Name :</span>
+                    <span class="emp-info-value">{{ $payslip->employee->user->fullname }}</span>
+                </div>
+                <div class="emp-info-row">
+                    <span class="emp-info-label">Designation :</span>
+                    <span class="emp-info-value">{{ $employee->designation->name ?? 'XX' }}</span>
+                </div>
+                <div class="emp-info-row">
+                    <span class="emp-info-label">Emp ID :</span>
+                    <span class="emp-info-value">{{ $employee->emp_code ?? $employee->id ?? '45' }}</span>
+                </div>
+                <div class="emp-info-row">
+                    <span class="emp-info-label">Date of Joining :</span>
+                    <span class="emp-info-value">{{ \Carbon\Carbon::parse($employee->date_joined)->format('jS F Y') }}</span>
+                </div>
+                <div class="emp-info-row">
+                    <span class="emp-info-label">Location :</span>
+                    <span class="emp-info-value">{{ $employee->location ?? 'Noida' }}</span>
+                </div>
+                @if(!empty($employee->pan_number))
+                <div class="emp-info-row">
+                    <span class="emp-info-label">PAN Number :</span>
+                    <span class="emp-info-value">{{ $employee->pan_number }}</span>
+                </div>
+                @endif
+                @if(!empty($employee->bank_account_no))
+                <div class="emp-info-row">
+                    <span class="emp-info-label">Bank Account :</span>
+                    <span class="emp-info-value">{{ $employee->bank_account_no }}</span>
+                </div>
+                @endif
             </div>
 
-            {{-- SALARY TABLE --}}
+             @php
+                // Calculate totals
+                $baseSalary = $employee->salaryDetails->base_salary ?? 0;
+                $totalAllowances = $allowances->sum('amount') ?? 0;
+                $totalDeductions = $deductions->where('type', 'deduction')->sum('amount') ?? 0;
+                $grossSalary = $baseSalary + $totalAllowances;
+                
+                // Identify specific allowances
+                $hraAllowance = $allowances->where('name', 'HRA')->first()->amount ?? 0;
+                $otherAllowances = $totalAllowances - $hraAllowance;
+                
+                // Identify employee deductions (for the table)
+                $employeePF = $deductions->where('name', 'Employee PF')->first()->amount ?? 0;
+                $employeeESI = $deductions->where('name', 'Employee ESI')->first()->amount ?? 0;
+                $tdsDeduction = $deductions->where('name', 'TDS')->first()->amount ?? 0;
+                $leaveDeduction = $deductions->where('name', 'Leave Deductions')->first()->amount ?? 0;
+                $otherDeductions = $deductions->whereNotIn('name', ['Employee PF', 'Employee ESI', 'TDS', 'Leave Deductions'])->where('type', 'deduction')->sum('amount') ?? 0;
+                
+                // Employer contributions
+                $employerPF = $deductions->where('name', 'Employer PF')->first()->amount ?? 0;
+                $employerESI = $deductions->where('name', 'Employer ESI')->first()->amount ?? 0;
+                $totalEmployerContribution = $employerPF + $employerESI;
+                
+                // CTC Calculation
+                $ctcMonthly = $grossSalary + $totalEmployerContribution;
+                $ctcAnnual = $ctcMonthly * 12;
+                
+                // Net Pay (should come from payslip)
+                $netPay = $payslip->net_pay ?? ($grossSalary - $totalDeductions);
+            @endphp   
+
+            {{-- SALARY TABLE - MATCHING THE DESIGN --}}
             <table class="salary-table">
                 <thead>
                     <tr>
-                        <th width="40%">SECTION</th>
-                        <th width="30%">AMOUNT</th>
-                        <th width="30%">DETAILS</th>
+                        <th width="40%">EMOLUMENTS</th>
+                        <th width="20%" class="amount-col">AMOUNT (Rs.)</th>
+                        <th width="40%">DEDUCTIONS</th>
+                        <th width="20%" class="amount-col">AMOUNT (Rs.)</th>
                     </tr>
                 </thead>
                 <tbody>
-
-                    @php
-                        // Calculate totals
-                        $baseSalary = $employee->salaryDetails->base_salary ?? 0;
-                        $totalAllowances = $allowances->sum('amount') ?? 0;
-                        $totalDeductions = $deductions->sum('amount') ?? 0;
-                        $grossSalary = $baseSalary + $totalAllowances;
-                        $hraAllowance = $allowances->where('name', 'HRA')->first()->amount ?? 0;
-                        $otherAllowances = $totalAllowances - $hraAllowance;
-                        
-                        // Employer contributions
-                        $employerPF = 0;
-                        $employerESI = 0;
-                        foreach($deductions as $deduction) {
-                            if(stripos($deduction->name, 'employer') !== false || stripos($deduction->name, 'pf') !== false) {
-                                $employerPF += $deduction->amount ?? 0;
-                            }
-                            if(stripos($deduction->name, 'employer') !== false || stripos($deduction->name, 'esi') !== false) {
-                                $employerESI += $deduction->amount ?? 0;
-                            }
-                        }
-                        
-                        $totalEmployerContribution = $employerPF + $employerESI;
-                        $ctc = $grossSalary + $totalEmployerContribution;
-                    @endphp   
-
-                    {{-- Monthly Salary Structure (Earnings) --}}
-                    @if($baseSalary > 0)
+                    {{-- Main row with Earnings and Deductions --}}
                     <tr>
-                        <td>Basic Salary</td>
-                        <td>{{ $currency }} {{ number_format($baseSalary, 2) }}</td>
-                        <td>50% of Gross Salary</td>
+                        {{-- Earnings Column --}}
+                        <td style="vertical-align: top; padding: 0;">
+                            <table style="width: 100%; border-collapse: collapse; border: none;">
+                                @if($baseSalary > 0)
+                                <tr>
+                                    <td style="border: none; padding: 4px;">Basic Salary</td>
+                                </tr>
+                                @endif
+                                
+                                @if($hraAllowance > 0)
+                                <tr>
+                                    <td style="border: none; padding: 4px;">HRA</td>
+                                </tr>
+                                @endif
+                                
+                                @foreach($allowances as $allowance)
+                                    @if(strtolower($allowance->name) != 'hra' && strtolower($allowance->name) != 'basic salary')
+                                    <tr>
+                                        <td style="border: none; padding: 4px;">{{ $allowance->name }}</td>
+                                    </tr>
+                                    @endif
+                                @endforeach
+                                
+                                @if($otherAllowances > 0 && $allowances->whereNotIn('name', ['HRA', 'Basic Salary'])->count() == 0)
+                                <tr>
+                                    <td style="border: none; padding: 4px;">Other Allowances</td>
+                                </tr>
+                                @endif
+                                
+                                @php
+                                    $earningsCount = ($baseSalary > 0 ? 1 : 0) + ($hraAllowance > 0 ? 1 : 0) + $allowances->whereNotIn('name', ['HRA', 'Basic Salary'])->count();
+                                    $deductionsCount = ($employeePF > 0 ? 1 : 0) + ($employeeESI > 0 ? 1 : 0) + ($tdsDeduction > 0 ? 1 : 0) + ($leaveDeduction > 0 ? 1 : 0) + ($otherDeductions > 0 ? 1 : 0);
+                                    $maxRows = max($earningsCount, $deductionsCount, 3);
+                                @endphp
+                                
+                                @for($i = $earningsCount; $i < $maxRows; $i++)
+                                <tr>
+                                    <td style="border: none; padding: 4px;">&nbsp;</td>
+                                </tr>
+                                @endfor
+                            </table>
+                        </td>
+                        
+                        {{-- Earnings Amount Column --}}
+                        <td style="vertical-align: top; padding: 4px; text-align: right;">
+                            <table style="width: 100%; border-collapse: collapse; border: none;">
+                                @if($baseSalary > 0)
+                                <tr>
+                                    <td style="border: none; padding: 4px; text-align: right;">{{ number_format($baseSalary, 2) }}</td>
+                                </tr>
+                                @endif
+                                
+                                @if($hraAllowance > 0)
+                                <tr>
+                                    <td style="border: none; padding: 4px; text-align: right;">{{ number_format($hraAllowance, 2) }}</td>
+                                </tr>
+                                @endif
+                                
+                                @foreach($allowances as $allowance)
+                                    @if(strtolower($allowance->name) != 'hra' && strtolower($allowance->name) != 'basic salary')
+                                    <tr>
+                                        <td style="border: none; padding: 4px; text-align: right;">{{ number_format($allowance->amount, 2) }}</td>
+                                    </tr>
+                                    @endif
+                                @endforeach
+                                
+                                @if($otherAllowances > 0 && $allowances->whereNotIn('name', ['HRA', 'Basic Salary'])->count() == 0)
+                                <tr>
+                                    <td style="border: none; padding: 4px; text-align: right;">{{ number_format($otherAllowances, 2) }}</td>
+                                </tr>
+                                @endif
+                                
+                                @for($i = $earningsCount; $i < $maxRows; $i++)
+                                <tr>
+                                    <td style="border: none; padding: 4px; text-align: right;">&nbsp;</td>
+                                </tr>
+                                @endfor
+                                
+                                {{-- Gross Salary Total --}}
+                                <!-- <tr class="fw-bold">
+                                    <td style="border: none; padding: 4px; text-align: right; border-top: 1px solid #000;">{{ number_format($grossSalary, 2) }}</td>
+                                </tr> -->
+                            </table>
+                        </td>
+                        
+                        {{-- Deductions Column --}}
+                        <td style="vertical-align: top; padding: 0;">
+                            <table style="width: 100%; border-collapse: collapse; border: none;">
+                                @if($tdsDeduction > 0)
+                                <tr>
+                                    <td style="border: none; padding: 4px;">TDS</td>
+                                </tr>
+                                @else
+                                <tr>
+                                    <td style="border: none; padding: 4px;">TDS</td>
+                                </tr>
+                                @endif
+                                
+                                @if($employeePF > 0)
+                                <tr>
+                                    <td style="border: none; padding: 4px;">Provident Fund</td>
+                                </tr>
+                                @else
+                                <tr>
+                                    <td style="border: none; padding: 4px;">Provident Fund</td>
+                                </tr>
+                                @endif
+                                
+                                @if($employeeESI > 0)
+                                <tr>
+                                    <td style="border: none; padding: 4px;">Employees' State Insurance</td>
+                                </tr>
+                                @else
+                                <tr>
+                                    <td style="border: none; padding: 4px;">Employees' State Insurance</td>
+                                </tr>
+                                @endif
+                                
+                                @if($leaveDeduction > 0)
+                                <tr>
+                                    <td style="border: none; padding: 4px;">Leave Deductions</td>
+                                </tr>
+                                @else
+                                <tr>
+                                    <td style="border: none; padding: 4px;">Leave Deductions</td>
+                                </tr>
+                                @endif
+                                
+                                @if($otherDeductions > 0)
+                                <tr>
+                                    <td style="border: none; padding: 4px;">Others</td>
+                                </tr>
+                                @else
+                                <tr>
+                                    <td style="border: none; padding: 4px;">Others</td>
+                                </tr>
+                                @endif
+                                
+                                {{-- Total Deductions Row --}}
+                                <tr class="fw-bold">
+                                    <td style="border: none; padding: 3px; border-top: 1px solid #000">Total Deductions</td>
+                                </tr>
+                            </table>
+                        </td>
+                        
+                        {{-- Deductions Amount Column --}}
+                        <td style="vertical-align: top; padding: 0px; text-align: right;">
+                            <table style="width: 100%; border-collapse: collapse; border: none;">
+                                @if($tdsDeduction > 0)
+                                <tr>
+                                    <td style="border: none; padding: 4px; text-align: right;">{{ number_format($tdsDeduction, 2) }}</td>
+                                </tr>
+                                @else
+                                <tr>
+                                    <td style="border: none; padding: 4px; text-align: right;">-</td>
+                                </tr>
+                                @endif
+                                
+                                @if($employeePF > 0)
+                                <tr>
+                                    <td style="border: none; padding: 4px; text-align: right;">{{ number_format($employeePF, 2) }}</td>
+                                </tr>
+                                @else
+                                <tr>
+                                    <td style="border: none; padding: 4px; text-align: right;">NA</td>
+                                </tr>
+                                @endif
+                                
+                                @if($employeeESI > 0)
+                                <tr>
+                                    <td style="border: none; padding: 4px; text-align: right;">{{ number_format($employeeESI, 2) }}</td>
+                                </tr>
+                                @else
+                                <tr>
+                                    <td style="border: none; padding: 4px; text-align: right;">NA</td>
+                                </tr>
+                                @endif
+                                
+                                @if($leaveDeduction > 0)
+                                <tr>
+                                    <td style="border: none; padding: 4px; text-align: right;">{{ number_format($leaveDeduction, 2) }}</td>
+                                </tr>
+                                @else
+                                <tr>
+                                    <td style="border: none; padding: 4px; text-align: right;">-</td>
+                                </tr>
+                                @endif
+                                
+                                @if($otherDeductions > 0)
+                                <tr>
+                                    <td style="border: none; padding: 4px; text-align: right;">{{ number_format($otherDeductions, 2) }}</td>
+                                </tr>
+                                @else
+                                <tr>
+                                    <td style="border: none; padding: 4px; text-align: right;">-</td>
+                                </tr>
+                                @endif
+                                
+                                {{-- Total Deductions Amount --}}
+                                <tr class="fw-bold">
+                                    <td style="border: none; padding: 3px; text-align: right; border-top: 1px solid #000">{{ number_format($totalDeductions, 2) }}</td>
+                                </tr>
+                            </table>
+                        </td>
                     </tr>
-                    @endif
                     
-                    @foreach($allowances as $allowance)
-                    <tr>
-                        <td>{{ $allowance->name }}</td>
-                        <td>{{ $currency }} {{ number_format($allowance->amount, 2) }}</td>
-                        @if(strtolower($allowance->name) == 'hra')
-                        <td>{{ number_format(($hraAllowance / $grossSalary) * 100) }}% of basic Salary</td>
-                        @else
-                        <td></td>
-                        @endif
-                    </tr>
-                    @endforeach
-                    <tr class="fw-bold total-row">
-                        <td>Total Gross Salary</td>
-                        <td>{{ $currency }} {{ number_format($grossSalary, 2) }}</td>
-                        <td></td>
-                    </tr>
-
-                    {{-- Statutory Deductions --}}
-                    <tr class="section-row">
-                        <td colspan="3">Statutory Deductions</td>
-                    </tr>
-                    @php $hasDeductions = false; @endphp
-                    @foreach($deductions as $deduction)
-                        @if(stripos($deduction->name, 'employee') !== false || stripos($deduction->name, 'pf') !== false || stripos($deduction->name, 'esi') !== false)
-                            @php $hasDeductions = true; @endphp
-                            <tr>
-                                <td>{{ $deduction->name }}</td>
-                                <td>{{ $currency }} {{ number_format($deduction->amount, 2) }}</td>
-                                <td></td>
-                            </tr>
-                        @endif
-                    @endforeach
-                    @if(!$hasDeductions)
-                    <tr>
-                        <td>Employee PF</td>
-                        <td>{{ $currency }} 0.00</td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td>Employee ESI</td>
-                        <td>{{ $currency }} 0.00</td>
-                        <td></td>
-                    </tr>
-                    @endif
-                    <tr class="fw-bold total-row">
-                        <td>Total Deductions</td>
-                        <td>{{ $currency }} {{ number_format($totalDeductions, 2) }}</td>
-                        <td></td>
-                    </tr>
-
-                    {{-- Net Salary (In-Hand) --}}
-                    <tr class="section-row">
-                        <td colspan="3">Net Salary (In-Hand)</td>
-                    </tr>
-                    <tr class="fw-bold net-pay-row">
+                    {{-- Gross Salary and Net Pay Row --}}
+                    <tr class="fw-bold">
+                        <td>Gross Salary</td>
+                        <td style="text-align: right;">{{ number_format($grossSalary, 2) }}</td>
                         <td>Net Pay</td>
-                        <td>{{ $currency }} {{ number_format($payslip->net_pay, 2) }}</td>
-                        <td></td>
+                        <td style="text-align: right;">{{ number_format($netPay, 2) }}</td>
                     </tr>
+                </tbody>
+            </table>
 
-                    {{-- Employer Contributions (CTC) --}}
-                    <tr class="section-row">
-                        <td colspan="3">Employer Contributions (CTC)</td>
+            {{-- Employer Contributions & CTC Section --}}
+            @if($totalEmployerContribution > 0)
+            <table class="salary-table" style="margin-top: 20px;">
+                <tbody>
+                    <tr class="section-header">
+                        <td colspan="4">Employer Contributions (CTC Components)</td>
                     </tr>
                     @if($employerPF > 0)
                     <tr>
-                        <td>Employer PF</td>
-                        <td>{{ $currency }} {{ number_format($employerPF, 2) }}</td>
-                        <td></td>
-                    </tr>
-                    @else
-                    <tr>
-                        <td>Employer PF</td>
-                        <td>{{ $currency }} 0.00</td>
-                        <td></td>
+                        <td width="40%">Employer PF</td>
+                        <td width="20%" style="text-align: right;">{{ number_format($employerPF, 2) }}</td>
+                        <td width="40%">Employer ESI</td>
+                        <td width="20%" style="text-align: right;">{{ number_format($employerESI, 2) }}</td>
                     </tr>
                     @endif
-                    @if($employerESI > 0)
-                    <tr>
-                        <td>Employer ESI</td>
-                        <td>{{ $currency }} {{ number_format($employerESI, 2) }}</td>
-                        <td></td>
-                    </tr>
-                    @else
-                    <tr>
-                        <td>Employer ESI</td>
-                        <td>{{ $currency }} 0.00</td>
-                        <td></td>
-                    </tr>
-                    @endif
-                    <tr class="fw-bold total-row">
-                        <td>Total Employer Contribution</td>
-                        <td>{{ $currency }} {{ number_format($totalEmployerContribution, 2) }}</td>
-                        <td></td>
-                    </tr>
-
-                    {{-- CTC Per Annum --}}
-                    <tr class="fw-bold ctc-row">
+                    <tr class="fw-bold">
+                        <td>Total Employer Contribution (Monthly)</td>
+                        <td style="text-align: right;">{{ number_format($totalEmployerContribution, 2) }}</td>
                         <td>CTC Per Annum</td>
-                        <td>{{ $currency }} {{ number_format($ctc * 12, 2) }}</td>
-                        <td></td>
+                        <td style="text-align: right;">{{ number_format($ctcAnnual, 2) }}</td>
                     </tr>
-
                 </tbody>
             </table>
+            @endif
+
+            {{-- System Generated Footer --}}
+            <div class="system-generated">
+                <div style="text-align: center; font-size: 11px;">
+                    <span>This is System Generated slip, Hence Signature is not required.</span>
+                    <span style="display: block; margin-top: 5px;">Generated on: {{ date('d-m-Y H:i:s') }}</span>
+                </div>
+            </div>
 
             {{-- Print footer --}}
             <div class="annexure-footer print-only">
                 <span>This is a system generated payslip. No signature required.</span>
                 <span>Generated on: {{ date('d-m-Y H:i:s') }}</span>
             </div>
-
         </div>
-
     </div>
 @endsection
 
@@ -390,34 +633,25 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
-    function printPayslip() {
-        // Store original content
-        const originalContent = document.body.innerHTML;
-        const printContent = document.getElementById('payslipSection').innerHTML;
-        
-        // Set body to print content only
-        document.body.innerHTML = printContent;
-        
-        // Trigger print
-        window.print();
-        
-        // Restore original content
-        document.body.innerHTML = originalContent;
-        
-        // Refresh the page to restore event listeners
-        window.location.reload();
-    }
-
     function generatePDF() {
         const element = document.getElementById('payslipSection');
         
-        // Temporarily add print styles
         const printStyles = document.createElement('style');
         printStyles.innerHTML = `
             @media print {
                 body * { visibility: hidden; }
                 #payslipSection, #payslipSection * { visibility: visible; }
-                #payslipSection { position: absolute; left: 0; top: 0; }
+                #payslipSection { 
+                    position: absolute; 
+                    left: 0; 
+                    top: 0;
+                    background: white !important;
+                }
+                .salary-table th {
+                    background-color: #f0f0f0 !important;
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                }
             }
         `;
         document.head.appendChild(printStyles);
@@ -427,12 +661,10 @@
             useCORS: true,
             backgroundColor: '#ffffff',
             logging: false,
-            onclone: function(clonedDoc) {
-                clonedDoc.getElementById('payslipSection').style.padding = '50px 60px 140px 60px';
-                clonedDoc.getElementById('payslipSection').style.backgroundColor = '#ffffff';
-            }
+            allowTaint: true,
+            windowWidth: 800,
+            windowHeight: 1120
         }).then(canvas => {
-            // Remove temporary styles
             document.head.removeChild(printStyles);
             
             const imgData = canvas.toDataURL('image/png');
@@ -442,8 +674,8 @@
                 format: 'a4'
             });
             
-            const imgWidth = 210; // A4 width in mm
-            const pageHeight = 297; // A4 height in mm
+            const imgWidth = 210;
+            const pageHeight = 297;
             const imgHeight = (canvas.height * imgWidth) / canvas.width;
             
             let heightLeft = imgHeight;
@@ -459,7 +691,7 @@
                 heightLeft -= pageHeight;
             }
             
-            pdf.save('{{ $payslip->ps_id }}.pdf');
+            pdf.save('Payslip_{{ $employee->emp_code ?? $employee->id }}_{{ $payslip->payslip_date ?? date('F_Y') }}.pdf');
         }).catch(error => {
             console.error('Error generating PDF:', error);
             alert('Error generating PDF. Please try again.');

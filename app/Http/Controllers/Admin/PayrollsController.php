@@ -152,8 +152,11 @@ class PayrollsController extends Controller
         $pageTitle = $payslip->ps_id ?? __('Payslip');
         $currency = LocaleSettings('currency_symbol');
         $employee = $payslip->employee;
-        $allowances = $payslip->allowances();
-        $deductions = $payslip->deductions();
+        // $allowances = $payslip->allowances();
+        // $deductions = $payslip->deductions();
+        $allowances = EmployeeAllowance::with('employeeDetail.user')->get();
+        $deductions = EmployeeDeduction::with('employeeDetail.user')->get();
+        // dd($deductions);
         return view('pages.payroll.payslips.show',compact(
             'payslip','pageTitle','currency','employee','allowances','deductions'
         ));
