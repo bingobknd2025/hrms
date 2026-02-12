@@ -146,6 +146,7 @@ class PayrollsController extends Controller
      * Display the specified resource.
      */
     public function show(string $id)
+    
     {
         $payslip = Payslip::findOrFail(Crypt::decrypt($id));
         // dd($payslip);
