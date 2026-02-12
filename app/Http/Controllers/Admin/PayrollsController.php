@@ -141,12 +141,8 @@ class PayrollsController extends Controller
         $notification = notify(__('Payslip has been created'));
         return back()->with($notification);
     }
-
-    /**
-     * Display the specified resource.
-     */
     public function show(string $id)
-    
+
     {
         $payslip = Payslip::findOrFail(Crypt::decrypt($id));
         // dd($payslip);
